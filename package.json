@@ -1,5 +1,5 @@
 {
-  "name": "@icap-ethiopia/esm-ethio-hiv-app",
+  "name": "@icap-ethiopia/esm-ethio-viral-load-app",
   "version": "4.0.3",
   "license": "MPL-2.0",
   "description": "An OpenMRS seed application for building microfrontends",

@@ -1,25 +1,24 @@
+export const moduleName = '@openmrs/esm-patient-chart-app';
+
 export const encounterRepresentation =
   'custom:(uuid,encounterDatetime,encounterType,location:(uuid,name),' +
   'patient:(uuid,display),encounterProviders:(uuid,provider:(uuid,name)),' +
   'obs:(uuid,obsDatetime,voided,groupMembers,formFieldNamespace,formFieldPath,concept:(uuid,name:(uuid,name)),value:(uuid,name:(uuid,name),' +
   'names:(uuid,conceptNameType,name))))';
 
-export const transferOutFieldConcepts = {
-  transfferedFrom: '161550AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  transferredTo: '2c30c599-1e4f-46f9-8488-5ab57cdc8ac3',
-  ClinicianName: '1473AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  mrn: '9f760fe1-5cde-41ab-99b8-b8e1d77de902',
-  artStarted: '1149AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  originalFirstLineRegimenDose: '6d7d0327-e1f8-4246-bfe5-be1e82d94b14',
-  dateOfTransfer: '160649AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+export const viralLoadFieldConcepts = {  
+  dateOfSampleCollectionDate: '159951AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  dateOfSpecimenSent: '82240b0c-f519-4608-af5e-642864aeea5e',
+  specimenType: '4c1fed7f-7346-498d-9846-effd0629ecff',
+  providerName: '1473AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   providerTelephoneNumber: '5587f1b1-1917-4345-a284-a0ed6a56a522',
-  otherSpecify: 'a2148b80-36e8-4e3f-9759-a04c0deafa86',
-  motherPMTCT: '',
+  requestedDate: '163281AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+  
 };
 
-export const transferOutWorkspace = 'transfer-out-workspace';
+export const ettorsWorkspace = 'ettors-workspace';
 export const phdpEncounterTypeUuid = 'f1b397c1-46bd-43e6-a23d-ae2cedaec881';
 
 export const FOLLOWUP_ENCOUNTER_TYPE_UUID = '136b2ded-22a3-4831-a39a-088d35a50ef5';
-export const TRANSFEROUT_ENCOUNTER_TYPE_UUID = 'd617892c-4154-4e51-9418-8c6e7a654dd9';
-export const TRANSFEROUT_FORM_UUID = '10c8c272-45e3-4efc-a39b-493dd541ee78';
+export const VIRALLOAD_ENCOUNTER_TYPE_UUID = 'f0979041-4a1e-44e6-b8c2-6e6631b75548';
+export const VIRALLOAD_FORM_UUID = '2bc4595c-3714-411f-ae1f-986acc95161e';

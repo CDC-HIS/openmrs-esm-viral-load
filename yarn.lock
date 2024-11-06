@@ -1802,9 +1802,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@icap-ethiopia/esm-ethio-hiv-app@workspace:.":
+"@icap-ethiopia/esm-ethio-viral-load-app@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@icap-ethiopia/esm-ethio-hiv-app@workspace:."
+  resolution: "@icap-ethiopia/esm-ethio-viral-load-app@workspace:."
   dependencies:
     "@carbon/react": "npm:^1.33.1"
     "@openmrs/esm-framework": "npm:next"

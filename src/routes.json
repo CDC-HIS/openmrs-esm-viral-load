@@ -21,9 +21,9 @@
       "slot": "Boxes"
     },
     {
-      "name": "transfer-out-summary-widget",
-      "component": "transferOutSummary",
-      "slot": "transfer-out-dashboard-slot",
+      "name": "ettors-current-widget",
+      "component": "ettorsCurrent",
+      "slot": "ettors-dashboard-slot",
       "online": true,
       "offline": true,
       "meta": {
@@ -31,16 +31,26 @@
       }
     },
     {
-      "name": "transfer-out-summary-dashboard",
-      "component": "transferOutDashboardLink",
+      "name": "ettors-summary-widget",
+      "component": "ettorsSummary",
+      "slot": "ettors-dashboard-slot",
+      "online": true,
+      "offline": true,
+      "meta": {
+        "columnSpan": 4
+      }
+    },    
+    {
+      "name": "ettors-summary-dashboard",
+      "component": "ettorsDashboardLink",
       "slot": "patient-chart-dashboard-slot",
       "online": true,
       "offline": true,
       "order": 6,
       "meta": {
         "columns": 1,
-        "slot": "transfer-out-dashboard-slot",
-        "path": "transfer-out"
+        "slot": "ettors-dashboard-slot",
+        "path": "ettors"
       }
     },
     {
@@ -56,13 +66,12 @@
   ],
   "workspaces": [
     {
-      "name": "transfer-out-workspace",
-      "title": "Transfer Out",
-      "component": "transferOutWorkspace",
+      "name": "ettors-workspace",
+      "title": "VIRAL LOAD",
+      "component": "ettorsWorkspace",
       "type": "form",
-      "canMaximize": false,
-      "canHide": false,
-      "width": "wider"
+      "canMaximize": true,
+      "canHide": false
     }
   ]
 }

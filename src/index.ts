@@ -2,12 +2,13 @@ import { getAsyncLifecycle, defineConfigSchema, getSyncLifecycle } from '@openmr
 import { configSchema } from './config-schema';
 import { createDashboardLink } from '@openmrs/esm-patient-common-lib';
 import { dashboardMeta } from './dashboard.meta';
-import TransferOutSummary from './transfer-out/transfer-out-summary.component';
+import EttorsSummary from './viral-load/viral-load-summary.component';
+import EttorsCurrent from './viral-load/viral-load-current.component';
 
-const moduleName = '@openmrs/esm-ethio-transfer-out';
+const moduleName = '@openmrs/esm-ethio-ettors';
 
 const options = {
-  featureName: 'transfer-out',
+  featureName: 'ettors',
   moduleName,
 };
 
@@ -18,17 +19,22 @@ export function startupApp() {
 }
 
 export const root = getAsyncLifecycle(() => import('./root.component'), options);
-export const transferOutSummary = getSyncLifecycle(TransferOutSummary, options);
+export const ettorsSummary = getSyncLifecycle(EttorsSummary, options);
+export const ettorsCurrent = getSyncLifecycle(EttorsCurrent, options);
 
 //Care & treatment dashboard link
-export const transferOutDashboardLink = getSyncLifecycle(
+export const ettorsDashboardLink = getSyncLifecycle(
   createDashboardLink({
     ...dashboardMeta,
     moduleName,
   }),
   options,
 );
-export const transferOutWorkspace = getAsyncLifecycle(() => import('./forms/transfer-out-form.component'), options);
+export const ettorsWorkspace = getAsyncLifecycle(() => import('./forms/viral-load-form.component'), options);
+// export const ettorsWorkspace = getAsyncLifecycle(
+//   () => import('./forms/viral-load-form.component'), 
+//   options
+// );
 
 export const encounterDeleteConfirmationDialog = getAsyncLifecycle(() => import('./utils/Delete-Encounter.modal'), {
   featureName: 'encounters',

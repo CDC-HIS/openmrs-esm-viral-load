@@ -17,8 +17,8 @@ import { useLayoutType } from '@openmrs/esm-framework';
 import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
-import { useEncounters } from './transfer-out.resource';
-import { TRANSFEROUT_ENCOUNTER_TYPE_UUID, transferOutFieldConcepts, transferOutWorkspace } from '../constants';
+import { useEncounters } from './viral-load.resource';
+import { VIRALLOAD_ENCOUNTER_TYPE_UUID, viralLoadFieldConcepts, ettorsWorkspace } from '../constants';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 
@@ -26,39 +26,34 @@ interface HivCareAndTreatmentProps {
   patientUuid: string;
 }
 
-const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
+const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
-  const displayText = 'Transfer Out';
-  const headerTitle = 'Transfer Out';
+  const displayText = 'Viral Load Order Result';
+  const headerTitle = 'Viral Load Order Result';
   const { encounters, isError, isLoading, isValidating, mutate } = useEncounters(
     patientUuid,
-    TRANSFEROUT_ENCOUNTER_TYPE_UUID,
+    VIRALLOAD_ENCOUNTER_TYPE_UUID,
   );
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-  const launchTransferOutForm = useCallback(() => launchPatientWorkspace(transferOutWorkspace), []);
+  const launchViralLoadForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
 
   const tableHeaders = [
-    { key: 'transferredTo', header: 'Transferred to' },
-    { key: 'dateOfTransfer', header: 'Date of Transfer' },
-    { key: 'clinicianName', header: 'Name' },
-    { key: 'mrn', header: 'MRN' },
-    { key: 'artStarted', header: 'ART Started' },
-    { key: 'regimen', header: 'Regimen' },
+    { key: 'specimenType', header: 'Specimen Type' },
+    { key: 'dateOfSampleCollectionDate', header: 'Date specimen Collected' },
+    { key: 'clinicianName', header: 'Date specimen sent' },
+    { key: 'requestedBy', header: 'Requested by' },
+    { key: 'requestedDate', header: 'Requested Date' },
+    { key: 'telNo', header: 'Tel. Number' },
   ];
 
   const tableRows = useMemo(() => {
     if (!Array.isArray(encounters)) return [];
     return encounters.map((encounter) => ({
       id: encounter.uuid,
-      transferredTo: getObsFromEncounter(encounter, transferOutFieldConcepts.transferredTo) ?? '--',
-      dateOfTransfer: getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer, true) ?? '--',
-      clinicianName: getObsFromEncounter(encounter, transferOutFieldConcepts.ClinicianName) ?? '--',
-      mrn: getObsFromEncounter(encounter, transferOutFieldConcepts.mrn) ?? '--',
-      artStarted: getObsFromEncounter(encounter, transferOutFieldConcepts.artStarted) ?? '--',
-      regimen: getObsFromEncounter(encounter, transferOutFieldConcepts.originalFirstLineRegimenDose) ?? '--',
+      dateOfSampleCollectionDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSampleCollectionDate, true) ?? '--',      
       encounterDatetime: encounter.encounterDatetime,
     }));
   }, [encounters]);
@@ -102,7 +97,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
           kind="ghost"
           renderIcon={(props) => <Add size={16} {...props} />}
           iconDescription="Add"
-          onClick={launchTransferOutForm}
+          onClick={launchViralLoadForm}
         >
           {t('add', 'Add')}
         </Button>
@@ -118,7 +113,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
           >
             {({ rows, headers, getHeaderProps, getTableProps }) => (
               <TableContainer>
-                <Table aria-label="Transfer Out" {...getTableProps()}>
+                <Table aria-label="Viral Load" {...getTableProps()}>
                   <TableHead>
                     <TableRow>
                       {headers.map((header) => (
@@ -166,10 +161,10 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
           />
         </>
       ) : (
-        <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchTransferOutForm} />
+        <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchViralLoadForm} />
       )}
     </div>
   );
 };
 
-export default TransferOutSummary;
+export default ViralLoadSummary;

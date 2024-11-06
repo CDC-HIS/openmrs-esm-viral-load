@@ -54,3 +54,28 @@ export function fetchPatientLastEncounter(patientUuid: string, encounterType) {
     return null;
   });
 }
+
+export async function fetchPatientData(patientUuid: string) {
+  try {
+    const response = await openmrsFetch(`${restBaseUrl}/followup/${patientUuid}`);
+    const data = await response.data;
+
+    return {
+      patientUUID: data.patientUUID,
+      currentRegimenInitiatedDate: data.currentRegimenInitiatedDate,
+      regimen: data.regimen,
+      followUpStatus: data.followUpStatus,
+      pregnancyStatus: data.pregnancyStatus,
+      breastFeeding: data.breastFeeding,
+      cd4AboveFiveAgeCount: data.cd4AboveFiveAgeCount,
+      cd4ForChild: data.cd4ForChild,
+      // reasonForVlTest: data.reasonForVlTest,
+      // routingVlTest: data.routingVlTest,
+      // targetedVlTest: data.targetedVlTest,
+      resourceVersion: data.resourceVersion,
+    };
+  } catch (error) {
+    console.error('Error fetching patient data:', error);
+    return null;
+  }
+}
