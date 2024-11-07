@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Button,
   DataTable,
@@ -13,7 +13,7 @@ import {
 } from '@carbon/react';
 import { DataTableSkeleton, InlineLoading } from '@carbon/react';
 import { Add } from '@carbon/react/icons';
-import { useLayoutType } from '@openmrs/esm-framework';
+import { formatDate, parseDate, useLayoutType } from '@openmrs/esm-framework';
 import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
@@ -21,6 +21,8 @@ import { useEncounters } from './viral-load.resource';
 import { VIRALLOAD_ENCOUNTER_TYPE_UUID, viralLoadFieldConcepts, ettorsWorkspace } from '../constants';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
+import { TableExpandRow, TableExpandedRow } from '@carbon/react';
+import debounce from 'lodash.debounce';
 
 interface HivCareAndTreatmentProps {
   patientUuid: string;
@@ -41,19 +43,25 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const launchViralLoadForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
 
   const tableHeaders = [
-    { key: 'specimenType', header: 'Specimen Type' },
-    { key: 'dateOfSampleCollectionDate', header: 'Date specimen Collected' },
-    { key: 'clinicianName', header: 'Date specimen sent' },
+    { key: 'expand', header: '' },
+    { key: 'dateOfSampleCollectionDate', header: 'Date specimen collected' },
+    { key: 'dateOfSpecimenSent', header: 'Date specimen sent' },
+    { key: 'specimenType', header: 'Specimen type' },
     { key: 'requestedBy', header: 'Requested by' },
     { key: 'requestedDate', header: 'Requested Date' },
-    { key: 'telNo', header: 'Tel. Number' },
+    // { key: 'telNo', header: 'Tel. Number' },
   ];
 
   const tableRows = useMemo(() => {
     if (!Array.isArray(encounters)) return [];
-    return encounters.map((encounter) => ({
+    return encounters.map((encounter) => ({      
       id: encounter.uuid,
-      dateOfSampleCollectionDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSampleCollectionDate, true) ?? '--',      
+      dateOfSampleCollectionDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSampleCollectionDate, true) ?? '--',
+      dateOfSpecimenSent: getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSpecimenSent, true) ?? '--',
+      specimenType: '--',              // Replace with actual data if available
+      requestedBy: getObsFromEncounter(encounter, viralLoadFieldConcepts.providerName) ?? '--',
+      requestedDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate, true) ?? '--',
+      resultDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate, true) ?? '--',
       encounterDatetime: encounter.encounterDatetime,
     }));
   }, [encounters]);
@@ -104,18 +112,19 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
       </CardHeader>
       {currentRows.length > 0 ? (
         <>
-          <DataTable
+          <DataTable 
             filterRows={handleFilter}
             rows={currentRows}
             headers={tableHeaders}
             useZebraStyles
             size={isTablet ? 'lg' : 'sm'}
           >
-            {({ rows, headers, getHeaderProps, getTableProps }) => (
+            {({ rows, headers, getHeaderProps, getRowProps, getTableProps, getExpandedRowProps  }) => (
               <TableContainer>
                 <Table aria-label="Viral Load" {...getTableProps()}>
                   <TableHead>
                     <TableRow>
+                    <TableCell />
                       {headers.map((header) => (
                         <TableHeader
                           {...getHeaderProps({
@@ -132,8 +141,12 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                   <TableBody>
                     {rows.map((row) => {
                       const foundEncounter = encounters.find((encounter) => encounter.uuid === row.id);
+                      const resultDate = tableRows.find((rowData) => rowData.id === row.id)?.resultDate ?? '--';
                       return (
-                        <TableRow key={row.id}>
+                        <React.Fragment key={row.id}>
+                        <TableExpandRow className={styles.row} {...getRowProps({ row })}>
+                          {/* First cell for expand icon */}
+                          
                           {row.cells.map((cell) => (
                             <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
                           ))}
@@ -144,7 +157,37 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                               mutateEncounters={mutate}
                             />
                           </TableCell>
-                        </TableRow>
+                        </TableExpandRow>
+
+                        {row.isExpanded && (
+                          <TableExpandedRow
+                            colSpan={headers.length + 2}
+                            {...getExpandedRowProps({ row })}
+                          >
+                            <div className={styles.expandedRowContent}>
+      {/* Table layout for expanded row content */}
+      <TableContainer>
+        <Table size="sm">
+          <TableHead>
+            <TableRow>
+              <TableHeader>Result Date</TableHeader>
+              <TableHeader>Result</TableHeader>
+              <TableHeader>Provider Name</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell>{resultDate}</TableCell> 
+              <TableCell>--</TableCell>    
+              <TableCell>--</TableCell> 
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </div>
+                          </TableExpandedRow>
+                        )}
+                      </React.Fragment>
                       );
                     })}
                   </TableBody>

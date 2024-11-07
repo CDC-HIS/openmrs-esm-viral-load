@@ -60,7 +60,13 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
           className={styles.menuItem}
           id="editEncounter"
           onClick={launchEditEncounterForm}
-          itemText={t('edit', 'Edit')}
+          itemText={t('edit', 'Modify order')}
+        />
+        <OverflowMenuItem
+          className={styles.menuItem}
+          id="addEncounter"
+          onClick={launchEditEncounterForm}
+          itemText={t('add', 'Add result')}
         />
         <OverflowMenuItem
           className={styles.menuItem}
@@ -69,7 +75,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
           onClick={() => launchDeleteEncounterDialog(encounter.uuid)}
           isDelete
           hasDivider
-          aria-label={t('deleteEncounter', 'Delete Encounter')} // Added aria-label for accessibility
+          aria-label={t('deleteEncounter', 'Cancel order')} // Added aria-label for accessibility
         />
       </OverflowMenu>
     </Layer>
