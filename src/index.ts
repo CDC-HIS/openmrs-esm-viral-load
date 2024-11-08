@@ -31,10 +31,7 @@ export const ettorsDashboardLink = getSyncLifecycle(
   options,
 );
 export const ettorsWorkspace = getAsyncLifecycle(() => import('./forms/viral-load-form.component'), options);
-// export const ettorsWorkspace = getAsyncLifecycle(
-//   () => import('./forms/viral-load-form.component'), 
-//   options
-// );
+export const vlResultWorkspace = getAsyncLifecycle(() => import('./forms/viral-load-result-form.component'), options);
 
 export const encounterDeleteConfirmationDialog = getAsyncLifecycle(() => import('./utils/Delete-Encounter.modal'), {
   featureName: 'encounters',

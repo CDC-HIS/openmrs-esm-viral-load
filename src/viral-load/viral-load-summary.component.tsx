@@ -61,7 +61,9 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
       specimenType: '--',              // Replace with actual data if available
       requestedBy: getObsFromEncounter(encounter, viralLoadFieldConcepts.providerName) ?? '--',
       requestedDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate, true) ?? '--',
-      resultDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate, true) ?? '--',
+      resultDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.testDate, true) ?? '--',
+      viralLoadCount: getObsFromEncounter(encounter, viralLoadFieldConcepts.viralLoadCount) ?? '--',
+      testedBy: getObsFromEncounter(encounter, viralLoadFieldConcepts.testedBy) ?? '--',
       encounterDatetime: encounter.encounterDatetime,
     }));
   }, [encounters]);
@@ -142,6 +144,8 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                     {rows.map((row) => {
                       const foundEncounter = encounters.find((encounter) => encounter.uuid === row.id);
                       const resultDate = tableRows.find((rowData) => rowData.id === row.id)?.resultDate ?? '--';
+                      const viralLoadCount = tableRows.find((rowData) => rowData.id === row.id)?.viralLoadCount ?? '--';
+                      const testedBy = tableRows.find((rowData) => rowData.id === row.id)?.testedBy ?? '--';
                       return (
                         <React.Fragment key={row.id}>
                         <TableExpandRow className={styles.row} {...getRowProps({ row })}>
@@ -170,16 +174,16 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
         <Table size="sm">
           <TableHead>
             <TableRow>
-              <TableHeader>Result Date</TableHeader>
-              <TableHeader>Result</TableHeader>
-              <TableHeader>Provider Name</TableHeader>
+              <TableHeader>Test Date</TableHeader>
+              <TableHeader>Test Result</TableHeader>
+              <TableHeader>Tested By</TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
             <TableRow>
               <TableCell>{resultDate}</TableCell> 
-              <TableCell>--</TableCell>    
-              <TableCell>--</TableCell> 
+              <TableCell>{viralLoadCount}</TableCell>    
+              <TableCell>{testedBy}</TableCell> 
             </TableRow>
           </TableBody>
         </Table>

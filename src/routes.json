@@ -72,6 +72,14 @@
       "type": "form",
       "canMaximize": true,
       "canHide": false
+    },
+    {
+      "name": "viral-load-result-workspace",
+      "title": "VIRAL LOAD RESULT",
+      "component": "vlResultWorkspace",
+      "type": "form",
+      "canMaximize": true,
+      "canHide": false
     }
   ]
 }

@@ -395,7 +395,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
             {t('discard', 'Discard')}
           </Button>
           <Button style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
-            {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
+            {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')}
           </Button>
         </ButtonSet>
 

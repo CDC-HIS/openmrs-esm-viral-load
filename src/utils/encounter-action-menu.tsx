@@ -5,7 +5,7 @@ import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { showModal, useLayoutType } from '@openmrs/esm-framework';
 import styles from './encounter-action-menu.scss';
 import { type OpenmrsEncounter } from '../types';
-import { ettorsWorkspace } from '../constants';
+import { ettorsWorkspace, vlResultWorkspace } from '../constants';
 import { deleteEncounter } from './encounter.resource';
 
 interface EncounterActionMenuProps {
@@ -23,6 +23,14 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
       workspaceTitle: t('editEncounter', 'Edit Encounter'),
       encounter,
       formContext: 'editing',
+    });
+  }, [encounter, t]);
+
+  const launchAddVLResultForm = useCallback(() => {
+    launchPatientWorkspace(vlResultWorkspace, {
+      workspaceTitle: t('addEncounter', 'Viral Load Result'),
+      encounter,
+      formContext: 'adding',
     });
   }, [encounter, t]);
 
@@ -65,7 +73,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
         <OverflowMenuItem
           className={styles.menuItem}
           id="addEncounter"
-          onClick={launchEditEncounterForm}
+          onClick={launchAddVLResultForm}
           itemText={t('add', 'Add result')}
         />
         <OverflowMenuItem
