@@ -28,9 +28,9 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
 
   const launchAddVLResultForm = useCallback(() => {
     launchPatientWorkspace(vlResultWorkspace, {
-      workspaceTitle: t('addEncounter', 'Viral Load Result'),
+      workspaceTitle: t('editEncounter', 'Viral Load Result'),
       encounter,
-      formContext: 'adding',
+      formContext: 'editing',
     });
   }, [encounter, t]);
 
@@ -74,7 +74,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
           className={styles.menuItem}
           id="addEncounter"
           onClick={launchAddVLResultForm}
-          itemText={t('add', 'Add result')}
+          itemText={t('edit', 'Add result')}
         />
         <OverflowMenuItem
           className={styles.menuItem}

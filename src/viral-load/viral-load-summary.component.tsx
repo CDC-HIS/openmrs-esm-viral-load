@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   DataTable,
@@ -23,6 +23,7 @@ import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { TableExpandRow, TableExpandedRow } from '@carbon/react';
 import debounce from 'lodash.debounce';
+import { fetchPatientData, fetchVlTestRequestResult} from '../api/api';
 
 interface HivCareAndTreatmentProps {
   patientUuid: string;
@@ -32,7 +33,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const { t } = useTranslation();
   const displayText = 'Viral Load Order Result';
   const headerTitle = 'Viral Load Order Result';
-  const { encounters, isError, isLoading, isValidating, mutate } = useEncounters(
+  const { encounters, isError, isValidating, mutate } = useEncounters(
     patientUuid,
     VIRALLOAD_ENCOUNTER_TYPE_UUID,
   );
@@ -42,31 +43,87 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
   const launchViralLoadForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
 
+  const [vlTestRequestData, setVlTestRequestData] = useState(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const getVlTestRequestData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchVlTestRequestResult(patientUuid);
+        setVlTestRequestData(data);
+      } catch (error) {
+        console.error('Error fetching VL Test Request data:', error);
+        setVlTestRequestData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getVlTestRequestData();
+  }, [patientUuid]);
+
   const tableHeaders = [
     { key: 'expand', header: '' },
-    { key: 'dateOfSampleCollectionDate', header: 'Date specimen collected' },
-    { key: 'dateOfSpecimenSent', header: 'Date specimen sent' },
-    { key: 'specimenType', header: 'Specimen type' },
-    { key: 'requestedBy', header: 'Requested by' },
+    { key: 'followUpDate', header: 'Followup Date' },
     { key: 'requestedDate', header: 'Requested Date' },
-    // { key: 'telNo', header: 'Tel. Number' },
+    { key: 'regimen', header: 'Regimen' },
+    { key: 'reason', header: 'Reason for test' },
+    { key: 'specimenCollectedDate', header: 'Date specimen collected' },
+    { key: 'specimenType', header: 'Specimen type' },
+    { key: 'orderStatus', header: 'Order Status' },
+    
   ];
-
+  
   const tableRows = useMemo(() => {
-    if (!Array.isArray(encounters)) return [];
-    return encounters.map((encounter) => ({      
-      id: encounter.uuid,
-      dateOfSampleCollectionDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSampleCollectionDate, true) ?? '--',
-      dateOfSpecimenSent: getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSpecimenSent, true) ?? '--',
-      specimenType: '--',              // Replace with actual data if available
-      requestedBy: getObsFromEncounter(encounter, viralLoadFieldConcepts.providerName) ?? '--',
-      requestedDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate, true) ?? '--',
-      resultDate: getObsFromEncounter(encounter, viralLoadFieldConcepts.testDate, true) ?? '--',
-      viralLoadCount: getObsFromEncounter(encounter, viralLoadFieldConcepts.viralLoadCount) ?? '--',
-      testedBy: getObsFromEncounter(encounter, viralLoadFieldConcepts.testedBy) ?? '--',
-      encounterDatetime: encounter.encounterDatetime,
-    }));
-  }, [encounters]);
+    return vlTestRequestData
+    ? vlTestRequestData.map((item, index) => ({
+        id: item.uuid || index, 
+        followUpDate: item.followUpDate
+        ? formatDate(parseDate(item.followUpDate), { mode: 'wide' })
+        : null,
+        encounterId:item.encounterId,
+        requestedDate: item.requestedDate
+        ? formatDate(parseDate(item.requestedDate), { mode: 'wide' })
+        : null,
+        regimen: item.regimen || null,
+        reason: item.routineVl || item.targeted || null,
+        specimenCollectedDate: item.specimenCollectedDate 
+        ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
+        : null,
+        specimenType: item.specimenType || null,
+        orderStatus: item.orderStatus || null,         
+        testResultDate: item.testResultDate 
+        ? formatDate(parseDate(item.testResultDate), { mode: 'wide' })
+        : 'N/A',
+        testResult: item.testResult || '--',
+        testedBy: item.testedBy || '--',
+        resultStatus: item.resultStatus || '--',
+
+        reqDate:item.requestedDate,
+        specimenCollectedDateGC: item.specimenCollectedDate || null, 
+        providerPhoneNo: item.providerPhoneNo || null,
+        specimenSentToReferralDateGC: item.specimenSentToReferralDate || null,
+        requestedBy: item.requestedBy || null,
+
+        resultDate: item.testResultDate,
+        reviewedBy: item.reviewedBy,
+        aletSentDate: item.aletSentDate,
+        dispatchedDate: item.dispatchedDate,
+        labId: item.labId,
+        labName: item.labName,
+        specimenReceivedDate: item.specimenReceivedDate,
+        reasonQuality: item.reason,
+        instrumentUsed: item.instrumentUsed,
+        temperatureOnArrival: item.temperatureOnArrival,
+        resultReachedToFacDate: item.resultReachedToFacDate,
+        resultReceivedByFacility: item.resultReceivedByFacility,
+
+
+
+      }))
+    : [];
+  }, [vlTestRequestData]);
 
   const sortedRows = useMemo(() => {
     return tableRows.sort((a, b) => {
@@ -102,15 +159,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   return (
     <div className={styles.widgetCard}>
       <CardHeader title={headerTitle}>
-        <span>{isValidating ? <InlineLoading /> : null}</span>
-        <Button
-          kind="ghost"
-          renderIcon={(props) => <Add size={16} {...props} />}
-          iconDescription="Add"
-          onClick={launchViralLoadForm}
-        >
-          {t('add', 'Add')}
-        </Button>
+      {isValidating && <InlineLoading />}
       </CardHeader>
       {currentRows.length > 0 ? (
         <>
@@ -142,10 +191,19 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                   </TableHead>
                   <TableBody>
                     {rows.map((row) => {
-                      const foundEncounter = encounters.find((encounter) => encounter.uuid === row.id);
-                      const resultDate = tableRows.find((rowData) => rowData.id === row.id)?.resultDate ?? '--';
-                      const viralLoadCount = tableRows.find((rowData) => rowData.id === row.id)?.viralLoadCount ?? '--';
-                      const testedBy = tableRows.find((rowData) => rowData.id === row.id)?.testedBy ?? '--';
+                       const foundEncounter = encounters.find((encounter) => encounter.uuid === row.id);
+                      // const resultDate = tableRows.find((rowData) => rowData.id === row.id)?.resultDate ?? '--';
+                      // const viralLoadCount = tableRows.find((rowData) => rowData.id === row.id)?.viralLoadCount ?? '--';
+                      // const testedBy = tableRows.find((rowData) => rowData.id === row.id)?.testedBy ?? '--';
+                      //const foundRow = vlTestRequestData.find((item) => item.uuid === row.id);
+                      //console.log("typeof item.uuid", item.uuid);
+                      const tableRowData = tableRows.find((rowData) => rowData.id === row.id) || {};
+                      
+                      const { encounterId, uuid, reqDate, testResultDate, resultDate, testResult, specimenCollectedDateGC, 
+                              specimenType, providerPhoneNo, orderStatus, specimenSentToReferralDateGC, requestedBy, testedBy,
+                              resultStatus, requestedDate, reviewedBy, aletSentDate, dispatchedDate, labId, labName, 
+                              specimenReceivedDate, reasonQuality, instrumentUsed, temperatureOnArrival, 
+                              resultReachedToFacDate, resultReceivedByFacility} = tableRowData;
                       return (
                         <React.Fragment key={row.id}>
                         <TableExpandRow className={styles.row} {...getRowProps({ row })}>
@@ -157,7 +215,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                           <TableCell className="cds--table-column-menu">
                             <EncounterActionMenu
                               patientUuid={patientUuid}
-                              encounter={foundEncounter}
+                              encounter={tableRowData}
                               mutateEncounters={mutate}
                             />
                           </TableCell>
@@ -177,13 +235,15 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
               <TableHeader>Test Date</TableHeader>
               <TableHeader>Test Result</TableHeader>
               <TableHeader>Tested By</TableHeader>
+              <TableHeader>Result Status</TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
             <TableRow>
-              <TableCell>{resultDate}</TableCell> 
-              <TableCell>{viralLoadCount}</TableCell>    
+              <TableCell>{testResultDate}</TableCell> 
+              <TableCell>{testResult}</TableCell>    
               <TableCell>{testedBy}</TableCell> 
+              <TableCell>{resultStatus}</TableCell> 
             </TableRow>
           </TableBody>
         </Table>
@@ -208,7 +268,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
           />
         </>
       ) : (
-        <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchViralLoadForm} />
+        <div></div>
       )}
     </div>
   );

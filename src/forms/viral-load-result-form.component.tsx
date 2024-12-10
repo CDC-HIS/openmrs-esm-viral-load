@@ -14,7 +14,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
-import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter } from '../api/api';
+import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter, saveVlTestResult } from '../api/api';
 import {
   FOLLOWUP_ENCOUNTER_TYPE_UUID,
   VIRALLOAD_ENCOUNTER_TYPE_UUID,
@@ -69,9 +69,8 @@ interface ViralLoadResultFormProps {
 
 const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, encounter }) => {
   const { t } = useTranslation();
-  const [dateOfSampleCollection, setdateOfSampleCollection] = useState<string | null>(null);
-  const [dateOfSpecimenSent, setdateOfSpecimenSent] = useState<string | null>(null);
-  const [requestedDate, setrequestedDate] = useState<string | null>(null);
+ 
+  const [testDate, settestDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const today = new Date();
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -96,11 +95,18 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const [showChildDatePicker, setShowChildDatePicker] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isMale, setIsMale] = useState(false);
+
+  const { encounterId, resultDate, id, resultStatus, exchangeStatus,
+    reviewedBy, aletSentDate, dispatchedDate, labId, labName, 
+    specimenReceivedDate, reasonQuality, instrumentUsed, temperatureOnArrival, 
+    resultReachedToFacDate, resultReceivedByFacility, testResult, testedBy, requestedDate
+    } = encounter;
+  const isSaveDisabled = resultStatus === 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
+  const isRequestSent = exchangeStatus === 'SENT';
   
-
   // Fetch patient encounters
-  //const { mutate} = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
-
+  const { mutate} = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
+  
   // useEffect(() => {
   //   (async function () {
   //     const facilityInformation = await fetchLocation();
@@ -138,6 +144,63 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   //     );
   //   }
   // }, [encounter, setValue]);
+
+  useEffect(() => {
+    if (encounter) {      
+      //const { id,resultDate, reqDate, requestedDate, dateOfSampleCollectionDate, dateOfSpecimenSent, providerName, providerTelephoneNumber } = encounter;
+            
+      if (resultDate && dayjs(resultDate).isValid()) {
+        setValue('testDate', dayjs(resultDate).format('YYYY-MM-DD'));
+        settestDate(dayjs(resultDate).format('YYYY-MM-DD'));
+        
+      } else {
+        setValue('testDate', ''); // or default value
+      }
+
+      setValue('viralLoadCount', testResult);
+      setValue('testedBy', testedBy);
+      setValue('reviewedBy', reviewedBy);
+
+      if (aletSentDate && dayjs(aletSentDate).isValid()) {
+        setValue('panicAlertSent', dayjs(aletSentDate).format('YYYY-MM-DD'));
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+      } else {
+        setValue('panicAlertSent', ''); // or default value
+      }
+
+      if (dispatchedDate && dayjs(dispatchedDate).isValid()) {
+        setValue('dispatchDate', dayjs(dispatchedDate).format('YYYY-MM-DD'));
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+      } else {
+        setValue('dispatchDate', ''); // or default value
+      }
+
+      setValue('labID', labId);
+      setValue('testingLabName', labName);
+
+      if (specimenReceivedDate && dayjs(specimenReceivedDate).isValid()) {
+        setValue('specimenReceivedDate', dayjs(specimenReceivedDate).format('YYYY-MM-DD'));
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+      } else {
+        setValue('specimenReceivedDate', ''); // or default value
+      }
+
+      setValue('reason', reasonQuality);
+      //setValue('instrumentUsed', instrumentUsed);
+      setValue('tempratureOnArrival', temperatureOnArrival);
+
+      if (resultReachedToFacDate && dayjs(resultReachedToFacDate).isValid()) {
+        setValue('resultReceivedDate', dayjs(resultReachedToFacDate).format('YYYY-MM-DD'));
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+      } else {
+        setValue('resultReceivedDate', ''); // or default value
+      }
+
+      setValue('resultReceivedBy', resultReceivedByFacility);
+
+    }
+  }, [encounter, setValue, aletSentDate, dispatchedDate, labId, labName, reasonQuality, resultDate, resultReachedToFacDate, resultReceivedByFacility, reviewedBy, specimenReceivedDate, temperatureOnArrival, testResult, testedBy]);
+  
   type DateFieldKey = 'testDate' | 'requestedDate' | 'panicAlertSent' | 'dispatchDate' | 'resultReceivedDate' | 'specimenReceivedDate' | 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'requestedDate';
 
   const onDateChange = (value: any, dateField: DateFieldKey) => {
@@ -146,7 +209,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       if (isNaN(jsDate.getTime())) {
         throw new Error('Invalid Date');
       }
-      const formattedDate = dateField === 'testDate'
+      const formattedDate = dateField === 'dateOfSampleCollectionDate'
       ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss')  // Include time for datetime field
       : dayjs(jsDate).format('YYYY-MM-DD');
       setValue(dateField, formattedDate); // Dynamically set the value based on the field
@@ -197,29 +260,72 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       obs: obs,
     };
 
-    try {
-      // Check if we are editing an existing encounter
-      if (encounter?.uuid) {
-        // Update the existing encounter
-        await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
-        showSnackbar({
-          isLowContrast: true,
-          title: t('updatedEntry', 'Record Updated'),
-          kind: 'success',
-          subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
-        });
-      } else {
-        // Create a new encounter if none exists
-        await createEncounter(payload);
-        showSnackbar({
-          isLowContrast: true,
-          title: t('saveEntry', 'Record Saved'),
-          kind: 'success',
-          subtitle: t('viralLoadEncounterCreatedSuccessfully', 'A new encounter was created'),
-        });
-      }
+    const abortController = new AbortController();
 
-      //mutate();
+    const vlResultPayload = {
+      encounterId,
+      patientUuid,
+      testResultDate: fieldValues.testDate || '',
+      testResult: fieldValues.viralLoadCount || '',
+      testedBy: fieldValues.testedBy || '',
+      reviewedBy: fieldValues.reviewedBy || '',
+      aletSentDate: fieldValues.panicAlertSent || '',
+      dispatchedDate: fieldValues.dispatchDate || '',
+      labId: fieldValues.labID || '',
+      labName: fieldValues.testingLabName || '',
+      specimenReceivedDate: fieldValues.specimenReceivedDate || '',
+      specimenQuality: fieldValues.specimenQuality || '',
+      reason: fieldValues.reason || '',
+      instrumentUsed: fieldValues.instrumentUsed || '',
+      temperatureOnArrival: fieldValues.tempratureOnArrival || '',
+      resultReachedToFacDate: fieldValues.resultReceivedDate || '',
+      resultReceivedByFacility: fieldValues.resultReceivedBy || '',
+      resultStatus: "MANUAL_ETTORS"
+    };
+    const apiPayload = {
+      ...vlResultPayload,
+      patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
+    };
+    delete apiPayload.patientUuid;
+    
+
+    try {
+      await saveVlTestResult(new AbortController(), apiPayload, id);
+    showSnackbar({
+      isLowContrast: true,
+      title: t('saveEntry', 'Record Saved'),
+      kind: 'success',
+      subtitle: t('viralLoadTestResultSavedSuccessfully', 'The viral load test result has been saved.'),
+    });
+  //     saveVlTestResult(abortController, vlResultPayload, id)
+  // .then((response) => {
+  //   console.log('Saved VL Test Request Result:', response);
+  // })
+  // .catch((error) => {
+  //   console.error('Failed to save:', error);
+  // });
+      // Check if we are editing an existing encounter
+      // if (encounter?.uuid) {
+      //   // Update the existing encounter
+      //   await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
+      //   showSnackbar({
+      //     isLowContrast: true,
+      //     title: t('updatedEntry', 'Record Updated'),
+      //     kind: 'success',
+      //     subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
+      //   });
+      // } else {
+      //   // Create a new encounter if none exists
+      //   await createEncounter(payload);
+      //   showSnackbar({
+      //     isLowContrast: true,
+      //     title: t('saveEntry', 'Record Saved'),
+      //     kind: 'success',
+      //     subtitle: t('viralLoadEncounterCreatedSuccessfully', 'A new encounter was created'),
+      //   });
+      // }
+
+      mutate();
       closeWorkspaceHandler('viral-load-result-workspace');
       return true;
     } catch (error) {
@@ -243,7 +349,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   return (
     <Form className={styles.form} onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-result-form">
       <Stack gap={1} className={styles.container}>
-      <section className={styles.formGroup}>
+        <section className={styles.formGroup}>
           <ResponsiveWrapper>
             <Controller
               name="testDate"
@@ -251,8 +357,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
               render={({ field: { onChange, value, ref } }) => (
                 <OpenmrsDatePicker
                   id="testDate"
-                  labelText={t('testDate', 'Date specimen collected')}
-                  value={dateOfSampleCollection}
+                  labelText={t('testDate', 'Test Date')}
+                  value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'testDate')}
                   ref={ref}
@@ -275,7 +381,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
               hideSteppers
               id="viralLoadCount"
               //key={concept.uuid}
-              label="viralLoadCount"
+              label="Test Result"
               onChange={(event) => field.onChange(event.target.value)}
               value={field.value || ''}
             />
@@ -330,7 +436,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 <OpenmrsDatePicker
                   id="panicAlertSent"
                   labelText={t('panicAlertSent', 'Panic value alert sent')}
-                  value={dateOfSampleCollection}
+                  value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'panicAlertSent')}
                   ref={ref}
@@ -349,7 +455,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 <OpenmrsDatePicker
                   id="dispatchDate"
                   labelText={t('dispatchDate', 'Dispatch date')}
-                  value={dateOfSampleCollection}
+                  value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'dispatchDate')}
                   ref={ref}
@@ -406,7 +512,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 <OpenmrsDatePicker
                   id="specimenReceivedDate"
                   labelText={t('specimenReceivedDate', 'Specimen received date')}
-                  value={dateOfSampleCollection}
+                  value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'specimenReceivedDate')}
                   ref={ref}
@@ -416,7 +522,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        {/* <section className={styles.formGroup}>
           <ResponsiveWrapper>
           <Controller
                 name="specimenQuality"
@@ -439,6 +545,30 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 )}
               />
           </ResponsiveWrapper>
+        </section> */}
+        <section className={styles.formGroup}>
+          <ResponsiveWrapper>
+            <Controller
+              name="specimenQuality"
+              control={control}
+              defaultValue={null} // Ensure a default value for the controlled component
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <div className={styles.row}>
+                  <Dropdown
+                    id="specimenQuality"
+                    label={t('pleaseSelect', 'Please select')}
+                    titleText={t('specimenQuality', 'Specimen quality')}
+                    items={['Acceptable', 'Unacceptable']} // Specify the dropdown options
+                    itemToString={(item) => item || ''} // Convert item to string for display
+                    onChange={(event) => onChange(event.selectedItem)} // Handle selection
+                    selectedItem={value || null} // Ensure selectedItem is controlled
+                    invalid={!!error} // Show invalid state if there's an error
+                    invalidText={error?.message} // Display error message
+                  />
+                </div>
+              )}
+            />
+          </ResponsiveWrapper>
         </section>
         <section className={styles.formGroup}>
           <ResponsiveWrapper>
@@ -459,7 +589,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        {/* <section className={styles.formGroup}>
           <ResponsiveWrapper>
           <Controller
       //key={reaction.uuid}
@@ -479,6 +609,62 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
         />
       )}
     />
+          </ResponsiveWrapper>
+        </section> */}
+        <section>
+          <ResponsiveWrapper>
+            <Controller
+              name="instrumentUsed"
+              control={control}
+              defaultValue="" // Initialize as an empty string
+              render={({ field: { onChange, value } }) => (
+                <div role="group" aria-labelledby="instrumentUsedLegend">
+                  <legend id="instrumentUsedLegend" style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
+                    Instrument Used
+                  </legend>
+                  
+                  {/* Abbot Checkbox */}
+                  <Checkbox
+                    id="instrumentUsedAbbot"
+                    labelText="Abbot"
+                    checked={value.includes('Abbot')}
+                    onChange={(event) => {
+                      const newValue = event.target.checked
+                        ? value ? `${value}, Abbot` : 'Abbot' // Append 'Abbot' if checked
+                        : value.replace(', Abbot', '').replace('Abbot', ''); // Remove 'Abbot' if unchecked
+                      onChange(newValue);
+                    }}
+                  />
+                  
+                  {/* Roche Checkbox */}
+                  <Checkbox
+                    id="instrumentUsedRoche"
+                    labelText="Roche"
+                    checked={value.includes('Roche')}
+                    onChange={(event) => {
+                      const newValue = event.target.checked
+                        ? value ? `${value}, Roche` : 'Roche' // Append 'Roche' if checked
+                        : value.replace(', Roche', '').replace('Roche', ''); // Remove 'Roche' if unchecked
+                      onChange(newValue);
+                    }}
+                  />
+                  
+                  {/* Xpert Checkbox */}
+                  <Checkbox
+                    id="instrumentUsedXpert"
+                    labelText="Xpert"
+                    checked={value.includes('Xpert')}
+                    onChange={(event) => {
+                      const newValue = event.target.checked
+                        ? value ? `${value}, Xpert` : 'Xpert' // Append 'Xpert' if checked
+                        : value.replace(', Xpert', '').replace('Xpert', ''); // Remove 'Xpert' if unchecked
+                      onChange(newValue);
+                    }}
+                  />
+                  
+                </div>
+              )}
+            />
           </ResponsiveWrapper>
         </section>
         <section className={styles.formGroup}>
@@ -509,7 +695,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 <OpenmrsDatePicker
                   id="resultReceivedDate"
                   labelText={t('resultReceivedDate', 'Date result reached to Facility')}
-                  value={dateOfSampleCollection}
+                  value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'resultReceivedDate')}
                   ref={ref}
@@ -519,7 +705,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        <section className={styles.lastField}>
           <ResponsiveWrapper>
             <Controller
               name="resultReceivedBy"
@@ -547,8 +733,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
           >
             {t('discard', 'Discard')}
           </Button>
-          <Button style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
-            {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
+          <Button disabled={isSaveDisabled || isRequestSent} style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
+            {encounter ? t('saveAndClose', 'Save and close') : t('saveAndClose', 'Save and close')}
           </Button>
         </ButtonSet>
         </Stack>

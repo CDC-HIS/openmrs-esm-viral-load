@@ -19,6 +19,64 @@ export function saveEncounter(abortController: AbortController, payload, encount
   });
 }
 
+export function saveVlTestRequestResult(
+  abortController: AbortController,
+  payload: any
+) {
+  // Construct the URL based on whether a UUID is provided
+  const url = `${restBaseUrl}/vltestrequestresult`;
+
+  // Make the API request
+  return openmrsFetch(url, {
+    headers: {
+      'Content-Type': 'application/json', // Set the appropriate Content-Type
+    },
+    method: 'POST', // Use PUT for updates and POST for creation
+    body: JSON.stringify(payload), // Convert the payload to a JSON string
+    signal: abortController.signal, // Handle abort signal
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to save VL Test Request Result: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .catch((err) => {
+      console.error('Error saving VL Test Request Result:', err);
+      throw err;
+    });
+}
+
+export function saveVlTestResult(
+  abortController: AbortController,
+  payload: any, 
+  encounterUuid?: string
+) {
+  // Construct the URL based on whether a UUID is provided
+  const url = `${restBaseUrl}/vltestrequestresult/${encounterUuid}`;
+
+  // Make the API request
+  return openmrsFetch(url, {
+    headers: {
+      'Content-Type': 'application/json', // Set the appropriate Content-Type
+    },
+    method: 'POST', // Use PUT for updates and POST for creation
+    body: JSON.stringify(payload), // Convert the payload to a JSON string
+    signal: abortController.signal, // Handle abort signal
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to save VL Test Request Result: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .catch((err) => {
+      console.error('Error saving VL Test Request Result:', err);
+      throw err;
+    });
+}
+
+
 export function fetchLocation() {
   return openmrsFetch(`${restBaseUrl}/location?q=&v=default`);
 }
@@ -77,5 +135,68 @@ export async function fetchPatientData(patientUuid: string) {
   } catch (error) {
     console.error('Error fetching patient data:', error);
     return null;
+  }
+}
+
+export async function fetchVlTestRequestResult(patientUuid: string) {
+  try {
+    const response = await openmrsFetch(`${restBaseUrl}/vltestrequestresult/${patientUuid}`);
+    const details = await response.data;
+
+    // Return all details as they are
+    return details.map((detail: any) => ({
+      uuid: detail.uuid,
+      patientUUID: detail.patientUUID,
+      encounterId: detail.encounterId,
+      facilityCode: detail.facilityCode,
+      requestedDate: detail.requestedDate,
+      regimen: detail.regimen,
+      dateInitiated: detail.dateInitiated,
+      currentArtAdherence: detail.currentArtAdherence,
+      pregnancy: detail.pregnancy,
+      breastFeeding: detail.breastFeeding,
+      cd4MostRecent: detail.cd4MostRecent,
+      cd4MostRecentDate: detail.cd4MostRecentDate,
+      cd4BaselineResult: detail.cd4BaselineResult,
+      cd4BaselineResultDate: detail.cd4BaselineResultDate,
+      whoStaging: detail.whoStaging,
+      routineVl: detail.routineVl,
+      targeted: detail.targeted,
+      specimenCollectedDate: detail.specimenCollectedDate,
+      specimenType: detail.specimenType,
+      specimenSentToReferralDate: detail.specimenSentToReferralDate,
+      shipmentTemperature: detail.shipmentTemperature,
+      labId: detail.labId,
+      labName: detail.labName,
+      specimenReceivedDate: detail.specimenReceivedDate,
+      temperatureOnArrival: detail.temperatureOnArrival,
+      specimenQuality: detail.specimenQuality,
+      reason: detail.reason,
+      instrumentUsed: detail.instrumentUsed,
+      testResult: detail.testResult,
+      testedBy: detail.testedBy,
+      reviewedBy: detail.reviewedBy,
+      dispatchedDate: detail.dispatchedDate,
+      aletSentDate: detail.aletSentDate,
+      routineVLPregnantMother: detail.routineVLPregnantMother,
+      resultReachedToFacDate: detail.resultReachedToFacDate,
+      resultReceivedByFacility: detail.resultReceivedByFacility,
+      attachedToPatientDate: detail.attachedToPatientDate,
+      communicatedToPatientDate: detail.communicatedToPatientDate,
+      testResultDate: detail.testResultDate,
+      requestId: detail.requestId,
+      responseId: detail.responseId,
+      orderStatus: detail.orderStatus,
+      resultStatus: detail.resultStatus,
+      requestedBy: detail.requestedBy,
+      exchangeStatus: detail.exchangeStatus,
+      followUpDate: detail.followUpDate,
+      patientId: detail.patientId,
+      providerPhoneNo: detail.providerPhoneNo,
+      resourceVersion: detail.resourceVersion,
+    }));
+  } catch (error) {
+    console.error('Error fetching VL Test Request Result data:', error);
+    return [];
   }
 }

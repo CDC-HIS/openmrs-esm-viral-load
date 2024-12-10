@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { TFunction } from 'react-i18next';
 import { useTranslation } from 'react-i18next';
 import styles from './lab-order-form.scss';
 import {
@@ -14,7 +15,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
-import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter } from '../api/api';
+import { fetchLocation, fetchVlTestRequestResult, getPatientEncounters, getPatientInfo, saveEncounter, saveVlTestRequestResult } from '../api/api';
 import {
   FOLLOWUP_ENCOUNTER_TYPE_UUID,
   VIRALLOAD_ENCOUNTER_TYPE_UUID,
@@ -31,11 +32,19 @@ import { RadioButtonGroup } from '@carbon/react';
 import { RadioButton } from '@carbon/react';
 import { Dropdown } from '@carbon/react';
 import { Checkbox } from '@carbon/react';
+import { FormGroup } from '@carbon/react';
+import { errors } from '@playwright/test';
 
 interface ResponsiveWrapperProps {
   children: React.ReactNode;
   isTablet: boolean;
 }
+
+interface RequiredFieldLabelProps {
+  label: string;
+  t: TFunction;
+}
+
 type FormInputs = Record<
   | 'dateOfSampleCollectionDate'
   | 'providerTelephoneNumber'
@@ -65,6 +74,13 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [facilityLocationName, setFacilityLocationName] = useState('');
   const [selectedField, setSelectedField] = useState<keyof FormInputs | null>(null);
 
+  const specimenTypeMap = {
+    'f3e5d62c-d420-4015-b77c-677c3d50ecfa': 'DBS',
+    '161939AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA': 'Whole blood',
+    '1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA': 'Plasma',
+    '46f5752c-b204-4926-b60d-df263633c93e': 'DPS (Dried Plasma Spot)',
+  };
+
   const encounterDatetime = new Date().toISOString();
 
   const encounterProviders = [
@@ -80,6 +96,15 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [showChildDatePicker, setShowChildDatePicker] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isMale, setIsMale] = useState(false);
+  const { orderStatus,encounterId, id, reqDate, specimenCollectedDateGC, providerPhoneNo, specimenSentToReferralDateGC, requestedBy } = encounter;
+  const isSaveDisabled = orderStatus === 'COMPLETE';
+
+  const { clearErrors } = useForm({
+    defaultValues: {
+      dateOfSampleCollectionDate: null,
+      dateOfSpecimenSent: null,
+    },
+  });
   
 
   // Fetch patient encounters
@@ -87,57 +112,40 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
   useEffect(() => {
     (async function () {
-      const facilityInformation = await fetchLocation();
-      facilityInformation.data.results.forEach((element) => {
-        if (element.tags.some((x) => x.display === 'Facility Location')) {
-          setFacilityLocationUUID(element.uuid);
-          setFacilityLocationName(element.display);
-        }
-      });
-    })();
-  }, []);
+      const vlOrder = await fetchVlTestRequestResult(patientUuid);
+    })
+
+  }, [patientUuid]);
+  
   
   // Load existing encounter data if editing
   useEffect(() => {
-    if (encounter) {
-      const dateOfSampleCollectionDateObs = getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSampleCollectionDate);
-      if (dateOfSampleCollectionDateObs && dayjs(dateOfSampleCollectionDateObs).isValid()) {
-        setValue('dateOfSampleCollectionDate', dayjs(dateOfSampleCollectionDateObs).format('YYYY-MM-DD'));
-        setdateOfSampleCollection(
-          dayjs(getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSampleCollectionDate)).format('YYYY-MM-DD'),
-        );
-      } else {
-        setValue('dateOfSampleCollectionDate', ''); // or any default value like null or empty string
-      }
-      const dateOfSpecimenSentObs = getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSpecimenSent);
-      if (dateOfSpecimenSentObs && dayjs(dateOfSpecimenSentObs).isValid()) {
-        setValue('dateOfSpecimenSent', dayjs(dateOfSpecimenSentObs).format('YYYY-MM-DD'));
-        setdateOfSpecimenSent(
-          dayjs(getObsFromEncounter(encounter, viralLoadFieldConcepts.dateOfSpecimenSent)).format('YYYY-MM-DD'),
-        );
-      } else {
-        setValue('dateOfSpecimenSent', ''); // or any default value like null or empty string
-      }
-      const requestedDateObs = getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate);
-      if (requestedDateObs && dayjs(requestedDateObs).isValid()) {
-        setValue('requestedDate', dayjs(requestedDateObs).format('YYYY-MM-DD'));
-        setrequestedDate(
-          dayjs(getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate)).format('YYYY-MM-DD'),
-        );
-      } else {
-        setValue('requestedDate', ''); // or any default value like null or empty string
-      }
+    if (reqDate && dayjs(reqDate).isValid()) {
+      setValue('requestedDate', dayjs(reqDate).format('YYYY-MM-DD'));
+      setrequestedDate(dayjs(reqDate).format('YYYY-MM-DD'));
       
-      setValue(
-        'providerName',
-        encounter?.obs?.find((e) => e?.concept?.uuid === viralLoadFieldConcepts.providerName)?.value || '',
-      );
-      setValue(
-        'providerTelephoneNumber',
-        encounter?.obs?.find((e) => e?.concept?.uuid === viralLoadFieldConcepts.providerTelephoneNumber)?.value || '',
-      );
+    } else {
+      setValue('requestedDate', ''); // or default value
     }
-  }, [encounter, setValue]);
+
+    if (specimenCollectedDateGC && dayjs(specimenCollectedDateGC).isValid()) {
+      setValue('dateOfSampleCollectionDate', dayjs(specimenCollectedDateGC).format('YYYY-MM-DD'));
+      
+    } else {
+      setValue('dateOfSampleCollectionDate', ''); // or default value
+    }
+    
+    setValue('providerTelephoneNumber', providerPhoneNo);
+    setValue('providerName', requestedBy);
+
+    if (specimenSentToReferralDateGC && dayjs(specimenSentToReferralDateGC).isValid()) {
+      setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDateGC).format('YYYY-MM-DD'));
+      
+    } else {
+      setValue('dateOfSpecimenSent', ''); // or default value
+    }
+  }, [encounter, setValue, reqDate, providerPhoneNo, requestedBy, specimenCollectedDateGC, specimenSentToReferralDateGC]);
+  
   type DateFieldKey = 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'requestedDate';
 
   const onDateChange = (value: any, dateField: DateFieldKey) => {
@@ -156,6 +164,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     }
   };
 
+
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
       ignoreChanges: false,
@@ -170,57 +179,101 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       : value;
   };
 
-  const handleFormSubmit = async (fieldValues: FormInputs) => {
-    const obs = [];
-    
-    // Prepare observations from field values
-    Object.keys(fieldValues).forEach((key) => {
-      if (fieldValues[key]) {
-        obs.push({
-          concept: viralLoadFieldConcepts[key],
-          formFieldNamespace: 'rfe-forms',
-          formFieldPath: `rfe-forms-${key}`,
-          value: formatValue(fieldValues[key]),
-        });
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      if (values.dateOfSampleCollectionDate || values.dateOfSpecimenSent) {
+        clearErrors(); // Clear errors dynamically when dates change
       }
     });
+    return () => subscription.unsubscribe();
+  }, [watch, clearErrors]);
+
+  const handleFormSubmit = async (fieldValues: FormInputs) => {
+    // const obs = [];
+    
+    // // Prepare observations from field values
+    // Object.keys(fieldValues).forEach((key) => {
+    //   if (fieldValues[key]) {
+    //     obs.push({
+    //       concept: viralLoadFieldConcepts[key],
+    //       formFieldNamespace: 'rfe-forms',
+    //       formFieldPath: `rfe-forms-${key}`,
+    //       value: formatValue(fieldValues[key]),
+    //     });
+    //   }
+    // });
 
     // Construct the base payload
-    const payload = {
-      encounterDatetime,
-      encounterProviders,
-      encounterType,
-      form,
-      location,
-      patient,
-      orders,
-      obs: obs,
+    // const payload = {
+    //   encounterDatetime,
+    //   encounterProviders,
+    //   encounterType,
+    //   form,
+    //   location,
+    //   patient,
+    //   orders,
+    //   obs: obs,
+    // };
+
+    const abortController = new AbortController();
+
+    const vlResultPayload = {
+      encounterId,
+      patientUuid,
+      specimenCollectedDate: fieldValues.dateOfSampleCollectionDate,
+      specimenSentToReferralDate: fieldValues.dateOfSpecimenSent,
+      specimenType: specimenTypeMap[fieldValues.specimenType],
+      requestedBy: fieldValues.providerName,
+      requestedDate: fieldValues.requestedDate,
+      providerPhoneNo: fieldValues.providerTelephoneNumber,
+      orderStatus: 'COMPLETE',
     };
+
+    const apiPayload = {
+      ...vlResultPayload,
+      patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
+    };
+    delete apiPayload.patientUuid;
 
     try {
       // Check if we are editing an existing encounter
-      if (encounter?.uuid) {
-        // Update the existing encounter
-        await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
-        showSnackbar({
-          isLowContrast: true,
-          title: t('updatedEntry', 'Record Updated'),
-          kind: 'success',
-          subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
-        });
-      } else {
-        // Create a new encounter if none exists
-        await createEncounter(payload);
-        showSnackbar({
-          isLowContrast: true,
-          title: t('saveEntry', 'Record Saved'),
-          kind: 'success',
-          subtitle: t('viralLoadEncounterCreatedSuccessfully', 'A new encounter was created'),
-        });
-      }
-
-      mutate();
+      saveVlTestRequestResult(abortController, apiPayload)
+  .then((response) => {
+    showSnackbar({
+      isLowContrast: true,
+      title: t('updatedEntry', 'Record Updated'),
+      kind: 'success',
+      subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
+    });
+    mutate();
       closeWorkspaceHandler('ettors-workspace');
+  })
+  .catch((error) => {
+    console.error('Failed to save:', error);
+  });
+      // if (encounter?.uuid) {
+      //   // Update the existing encounter
+      //   await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
+      //   showSnackbar({
+      //     isLowContrast: true,
+      //     title: t('updatedEntry', 'Record Updated'),
+      //     kind: 'success',
+      //     subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
+      //   });
+      // } else {
+      //   // Create a new encounter if none exists
+      //   await createEncounter(payload);
+      //   showSnackbar({
+      //     isLowContrast: true,
+      //     title: t('saveEntry', 'Record Saved'),
+      //     kind: 'success',
+      //     subtitle: t('viralLoadEncounterCreatedSuccessfully', 'A new encounter was created'),
+      //   });
+      // }
+
+      // mutate();
+      // closeWorkspaceHandler('ettors-workspace');
       return true;
     } catch (error) {
       console.error('Error saving encounter:', error);
@@ -248,16 +301,24 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
             <Controller
               name="dateOfSampleCollectionDate"
               control={control}
-              render={({ field: { onChange, value, ref } }) => (
+              rules={{
+                required: t('requiredField', 'This field is required'), // Ensure the field is required
+              }}
+              render={({ field: { onChange, value, ref }, fieldState }) => (
+                <>
                 <OpenmrsDatePicker
                   id="dateOfSampleCollectionDate"
                   labelText={t('dateOfSampleCollection', 'Date specimen collected')}
-                  value={dateOfSampleCollection}
+                  value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
                   ref={ref}
-                  invalidText={error}
+                  invalid={!!fieldState.error}
                 />
+                {fieldState.error && (
+                <div className={styles.errorMessage}>{fieldState.error.message}</div>
+                )}
+                </>
               )}
             />
           </ResponsiveWrapper>
@@ -267,16 +328,37 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               <Controller
                 name="dateOfSpecimenSent"
                 control={control}
-                render={({ field: { onChange, value, ref } }) => (
+                rules={{
+                  required: t('requiredField', 'This field is required'),
+                  validate: (value) => {
+                    const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
+                    if (!sampleDate) {
+                      return t('sampleDateRequired', 'Please provide a date for specimen collection first.');
+                    }
+                    // if (value < sampleDate) {
+                    //   return t(
+                    //     'invalidSentDate',
+                    //     'The specimen sent date cannot be earlier than the specimen collection date.'
+                    //   );
+                    // }
+                    return true;
+                  },
+                }}
+                render={({ field: { onChange, value, ref }, fieldState }) => (
+                  <>
                   <OpenmrsDatePicker
                     id="dateOfSpecimenSent"
                     labelText={t('dateOfSpecimenSent', 'Date specimen sent to referral lab.')}
-                    value={dateOfSpecimenSent}
+                    value={value}
                     maxDate={today}
                     onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
                     ref={ref}
-                    invalidText={error}
+                    invalid={!!fieldState.error}
                   />
+                  {fieldState.error && (
+                    <div className={styles.errorMessage}>{fieldState.error.message}</div>
+                  )}
+                  </>
                 )}
               />
         </ResponsiveWrapper>
@@ -351,16 +433,36 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     <Controller
                       name="requestedDate"
                       control={control}
-                      render={({ field: { onChange, value, ref } }) => (
+                      rules={{
+                        required: 'Requested Date is required',
+                        validate: (value) => {
+                          const specimenSentDate = watch('dateOfSpecimenSent'); // Get the specimen sent date
+                          if (!specimenSentDate) {
+                            return 'Please provide the specimen sent date first.';
+                          }
+                          if (value < specimenSentDate) {
+                            return 'Requested date cannot be earlier than the specimen sent date.';
+                          }
+                          return true;
+                        },
+                      }}
+                      render={({ field: { onChange, value, ref }, fieldState  }) => (
+                        <>
                         <OpenmrsDatePicker
                           id="requestedDate"
                           labelText={t('requestedDate', 'Requested Date:')}
-                          value={requestedDate}
+                          value={value}
                           maxDate={today}
                           onChange={(date) => onDateChange(date, 'requestedDate')}
                           ref={ref}
                           invalidText={error}
+                          isDisabled={true}
+                          isRequired={true}
                         />
+                       {fieldState.error && (
+                    <div className={styles.errorMessage}>{fieldState.error.message}</div>
+                  )}
+                        </>
                       )}
                     />
                 </ResponsiveWrapper>
@@ -383,7 +485,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               )}
             />
           </ResponsiveWrapper>
-        </section>        
+        </section>  
 
         <ButtonSet className={styles.buttonSet}>
           <Button
@@ -394,7 +496,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
           >
             {t('discard', 'Discard')}
           </Button>
-          <Button style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
+          <Button disabled={isSaveDisabled} style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
             {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')}
           </Button>
         </ButtonSet>
@@ -415,6 +517,18 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       </Stack>
     </Form>
   );
+
 };
+
+function RequiredFieldLabel({ label, t }: RequiredFieldLabelProps) {
+  return (
+    <span>
+      {label}
+      <span title={t('required', 'Required')} className={styles.required}>
+        *
+      </span>
+    </span>
+  );
+}
 
 export default ViralLoadForm;
