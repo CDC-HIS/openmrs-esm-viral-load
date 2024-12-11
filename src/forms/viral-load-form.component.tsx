@@ -81,6 +81,13 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     '46f5752c-b204-4926-b60d-df263633c93e': 'DPS (Dried Plasma Spot)',
   };
 
+  const specimenTypeMapDB = {
+    'DBS': 'f3e5d62c-d420-4015-b77c-677c3d50ecfa',
+    'Whole blood': '161939AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    'Plasma': '1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    'DPS (Dried Plasma Spot)': '46f5752c-b204-4926-b60d-df263633c93e',
+  };
+
   const encounterDatetime = new Date().toISOString();
 
   const encounterProviders = [
@@ -96,8 +103,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [showChildDatePicker, setShowChildDatePicker] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isMale, setIsMale] = useState(false);
-  const { orderStatus,encounterId, id, reqDate, specimenCollectedDateGC, providerPhoneNo, specimenSentToReferralDateGC, requestedBy } = encounter;
-  const isSaveDisabled = orderStatus === 'COMPLETE';
+  const { specimenType,orderStatus, exchangeStatus, encounterId, id, reqDate, specimenCollectedDateGC, providerPhoneNo, specimenSentToReferralDateGC, requestedBy } = encounter;
+  const isSaveDisabled = exchangeStatus === 'SENT';
 
   const { clearErrors } = useForm({
     defaultValues: {
@@ -137,6 +144,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     
     setValue('providerTelephoneNumber', providerPhoneNo);
     setValue('providerName', requestedBy);
+
+    setValue('specimenType', specimenTypeMapDB[specimenType]);
 
     if (specimenSentToReferralDateGC && dayjs(specimenSentToReferralDateGC).isValid()) {
       setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDateGC).format('YYYY-MM-DD'));
@@ -190,32 +199,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   }, [watch, clearErrors]);
 
   const handleFormSubmit = async (fieldValues: FormInputs) => {
-    // const obs = [];
-    
-    // // Prepare observations from field values
-    // Object.keys(fieldValues).forEach((key) => {
-    //   if (fieldValues[key]) {
-    //     obs.push({
-    //       concept: viralLoadFieldConcepts[key],
-    //       formFieldNamespace: 'rfe-forms',
-    //       formFieldPath: `rfe-forms-${key}`,
-    //       value: formatValue(fieldValues[key]),
-    //     });
-    //   }
-    // });
-
-    // Construct the base payload
-    // const payload = {
-    //   encounterDatetime,
-    //   encounterProviders,
-    //   encounterType,
-    //   form,
-    //   location,
-    //   patient,
-    //   orders,
-    //   obs: obs,
-    // };
-
     const abortController = new AbortController();
 
     const vlResultPayload = {
@@ -252,25 +235,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   .catch((error) => {
     console.error('Failed to save:', error);
   });
-      // if (encounter?.uuid) {
-      //   // Update the existing encounter
-      //   await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
-      //   showSnackbar({
-      //     isLowContrast: true,
-      //     title: t('updatedEntry', 'Record Updated'),
-      //     kind: 'success',
-      //     subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
-      //   });
-      // } else {
-      //   // Create a new encounter if none exists
-      //   await createEncounter(payload);
-      //   showSnackbar({
-      //     isLowContrast: true,
-      //     title: t('saveEntry', 'Record Saved'),
-      //     kind: 'success',
-      //     subtitle: t('viralLoadEncounterCreatedSuccessfully', 'A new encounter was created'),
-      //   });
-      // }
 
       // mutate();
       // closeWorkspaceHandler('ettors-workspace');
@@ -302,25 +266,37 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               name="dateOfSampleCollectionDate"
               control={control}
               rules={{
-                required: t('requiredField', 'This field is required'), // Ensure the field is required
+                required: t('requiredField', 'Date specimen collected is required'), // Ensure the field is required
+                
               }}
-              render={({ field: { onChange, value, ref }, fieldState }) => (
-                <>
-                <OpenmrsDatePicker
-                  id="dateOfSampleCollectionDate"
-                  labelText={t('dateOfSampleCollection', 'Date specimen collected')}
-                  value={value}
-                  maxDate={today}
-                  onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
-                  ref={ref}
-                  invalid={!!fieldState.error}
-                />
-                {fieldState.error && (
-                <div className={styles.errorMessage}>{fieldState.error.message}</div>
-                )}
-                </>
-              )}
-            />
+              render={({ field: { onChange, value, ref }, fieldState }) => {
+                const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
+                const requestDate = watch('requestedDate');
+                return (
+                  <>
+                    <OpenmrsDatePicker
+                      id="dateOfSampleCollectionDate"
+                      //labelText={t('dateOfSampleCollection', 'Date specimen collected')}
+                      labelText={
+                        <>
+                          {t('dateOfSampleCollection', 'Date specimen collected:')} 
+                          <span className={styles.required}>*</span>
+                        </>
+                      }
+                      value={value}
+                      minDate={requestDate}
+                      maxDate={sentDate || today} // Max date is the sent date or today if not set
+                      onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
+                      ref={ref}
+                      invalid={!!fieldState.error}
+                    />
+                    {fieldState.error && (
+                      <div className={styles.errorMessage}>{fieldState.error.message}</div>
+                    )}
+            </>
+        );
+      }}
+    />
           </ResponsiveWrapper>
         </section>
         <section>
@@ -329,37 +305,35 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                 name="dateOfSpecimenSent"
                 control={control}
                 rules={{
-                  required: t('requiredField', 'This field is required'),
-                  validate: (value) => {
-                    const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
-                    if (!sampleDate) {
-                      return t('sampleDateRequired', 'Please provide a date for specimen collection first.');
-                    }
-                    // if (value < sampleDate) {
-                    //   return t(
-                    //     'invalidSentDate',
-                    //     'The specimen sent date cannot be earlier than the specimen collection date.'
-                    //   );
-                    // }
-                    return true;
-                  },
+                  required: t('requiredField', 'This field is required'),                  
                 }}
-                render={({ field: { onChange, value, ref }, fieldState }) => (
-                  <>
-                  <OpenmrsDatePicker
-                    id="dateOfSpecimenSent"
-                    labelText={t('dateOfSpecimenSent', 'Date specimen sent to referral lab.')}
-                    value={value}
-                    maxDate={today}
-                    onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
-                    ref={ref}
-                    invalid={!!fieldState.error}
-                  />
-                  {fieldState.error && (
-                    <div className={styles.errorMessage}>{fieldState.error.message}</div>
-                  )}
-                  </>
-                )}
+                render={({ field: { onChange, value, ref }, fieldState }) => {
+                  const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
+                  const requestDate = watch('requestedDate');
+                  return (
+                    <>
+                      <OpenmrsDatePicker
+                        id="dateOfSpecimenSent"
+                        //labelText={t('dateOfSpecimenSent', 'Date specimen sent to referral lab.')}
+                        labelText={
+                          <>
+                            {t('dateOfSpecimenSent', 'Date specimen sent to referral lab:')} 
+                            <span className={styles.required}>*</span>
+                          </>
+                        }
+                        value={value}
+                        minDate={sampleDate || requestDate} // Min date is the sample collection date or null if not set
+                        maxDate={today}
+                        onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
+                        ref={ref}
+                        invalid={!!fieldState.error}
+                      />
+                      {fieldState.error && (
+                        <div className={styles.errorMessage}>{fieldState.error.message}</div>
+                      )}
+                    </>
+                  );
+                }}
               />
         </ResponsiveWrapper>
         </section>
@@ -368,9 +342,19 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
           <Controller
             name="specimenType"
             control={control}
-            render={({ field: { onChange, value, onBlur } }) => (
+            rules={{
+              required: t('specimenType', 'This field is required'),                  
+            }}
+            render={({ field: { onChange, value, onBlur }, fieldState }) => (
+              <>
               <RadioButtonGroup
-                legendText="Specimen Type"
+                //legendText="Specimen Type"
+                legendText={
+                  <>
+                    {t('specimenType', 'Specimen Type')} 
+                    <span className={styles.required}>*</span>
+                  </>
+                }
                 name="specimenType"
                 onChange={(newValue) => {
                   onChange(newValue);
@@ -379,6 +363,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                 orientation="vertical"
                 value={value}
                 onBlur={onBlur}
+                invalid={!!fieldState.error} // Highlight error state
+                error={fieldState.error?.message} // Display error message
               >
                 <RadioButton
                   id="specimenTypeDBS"
@@ -405,6 +391,10 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                   onFocus={() => setSelectedField('specimenType')}
                 />
               </RadioButtonGroup>
+              {fieldState.error && (
+                <div className={styles.errorMessage}>{fieldState.error.message}</div>
+              )}
+              </>
             )}
           />
         </ResponsiveWrapper>
@@ -433,24 +423,18 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     <Controller
                       name="requestedDate"
                       control={control}
-                      rules={{
-                        required: 'Requested Date is required',
-                        validate: (value) => {
-                          const specimenSentDate = watch('dateOfSpecimenSent'); // Get the specimen sent date
-                          if (!specimenSentDate) {
-                            return 'Please provide the specimen sent date first.';
-                          }
-                          if (value < specimenSentDate) {
-                            return 'Requested date cannot be earlier than the specimen sent date.';
-                          }
-                          return true;
-                        },
-                      }}
+                      
                       render={({ field: { onChange, value, ref }, fieldState  }) => (
                         <>
                         <OpenmrsDatePicker
                           id="requestedDate"
-                          labelText={t('requestedDate', 'Requested Date:')}
+                          //labelText={t('requestedDate', 'Requested Date:')}
+                          labelText={
+                            <>
+                              {t('requestedDate', 'Requested Date:')} 
+                              <span className={styles.required}>*</span>
+                            </>
+                          }
                           value={value}
                           maxDate={today}
                           onChange={(date) => onDateChange(date, 'requestedDate')}
@@ -467,7 +451,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     />
                 </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        <section className={styles.lastField}>
           <ResponsiveWrapper>
             <Controller
               name="providerTelephoneNumber"
