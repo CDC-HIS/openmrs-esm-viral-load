@@ -99,10 +99,11 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const { encounterId, resultDate, id, resultStatus, exchangeStatus,
     reviewedBy, aletSentDate, dispatchedDate, labId, labName, 
     specimenReceivedDate, reasonQuality, instrumentUsed, temperatureOnArrival, 
-    resultReachedToFacDate, resultReceivedByFacility, testResult, testedBy, requestedDate
+    resultReachedToFacDate, resultReceivedByFacility, testResult, testedBy, requestedDate, orderStatus
     } = encounter;
   const isSaveDisabled = resultStatus === 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
   const isRequestSent = exchangeStatus === 'SENT';
+  const isRequestComplete = orderStatus === 'INCOMPLETE';
   
   // Fetch patient encounters
   const { mutate} = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
@@ -157,8 +158,24 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
         setValue('testDate', ''); // or default value
       }
 
-      setValue('viralLoadCount', testResult);
-      setValue('testedBy', testedBy);
+      if(testResult !== '--')
+      {
+        setValue('viralLoadCount', testResult);
+      }
+      else
+      {
+        setValue('viralLoadCount', '');
+      }
+      
+      if (testedBy !== '--')
+      {
+        setValue('testedBy', testedBy);
+      }
+      else
+      {
+        setValue('testedBy', '');
+      }
+      
       setValue('reviewedBy', reviewedBy);
 
       if (aletSentDate && dayjs(aletSentDate).isValid()) {
@@ -357,7 +374,13 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
               render={({ field: { onChange, value, ref } }) => (
                 <OpenmrsDatePicker
                   id="testDate"
-                  labelText={t('testDate', 'Test Date')}
+                  //labelText={t('testDate', 'Test Date')}
+                  labelText={
+                    <>
+                      {t('testDate', 'Test Date:')} 
+                      <span className={styles.required}>*</span>
+                    </>
+                  }
                   value={value}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'testDate')}
@@ -382,6 +405,11 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
               id="viralLoadCount"
               //key={concept.uuid}
               label="Test Result"
+              labelText={
+                <>
+                  <span className={styles.required}>*</span>
+                </>
+              }
               onChange={(event) => field.onChange(event.target.value)}
               value={field.value || ''}
             />
@@ -733,7 +761,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
           >
             {t('discard', 'Discard')}
           </Button>
-          <Button disabled={isSaveDisabled || isRequestSent} style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
+          <Button disabled={isSaveDisabled || isRequestSent || isRequestComplete} style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
             {encounter ? t('saveAndClose', 'Save and close') : t('saveAndClose', 'Save and close')}
           </Button>
         </ButtonSet>

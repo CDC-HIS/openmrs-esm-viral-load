@@ -145,7 +145,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     setValue('providerTelephoneNumber', providerPhoneNo);
     setValue('providerName', requestedBy);
 
-    setValue('specimenType', specimenTypeMapDB[specimenType]);
+    //setValue('specimenType', specimenTypeMapDB[specimenType]);
 
     if (specimenSentToReferralDateGC && dayjs(specimenSentToReferralDateGC).isValid()) {
       setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDateGC).format('YYYY-MM-DD'));
@@ -153,7 +153,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     } else {
       setValue('dateOfSpecimenSent', ''); // or default value
     }
-  }, [encounter, setValue, reqDate, providerPhoneNo, requestedBy, specimenCollectedDateGC, specimenSentToReferralDateGC]);
+  }, [encounter, setValue, specimenType, reqDate, providerPhoneNo, requestedBy, specimenCollectedDateGC, specimenSentToReferralDateGC]);
   
   type DateFieldKey = 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'requestedDate';
 

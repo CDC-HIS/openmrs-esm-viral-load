@@ -95,7 +95,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
         orderStatus: item.orderStatus || null,         
         testResultDate: item.testResultDate 
         ? formatDate(parseDate(item.testResultDate), { mode: 'wide' })
-        : 'N/A',
+        : '--',
         testResult: item.testResult || '--',
         testedBy: item.testedBy || '--',
         resultStatus: item.resultStatus || '--',
