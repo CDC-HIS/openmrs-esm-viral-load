@@ -7,6 +7,7 @@ import styles from './encounter-action-menu.scss';
 import { type OpenmrsEncounter } from '../types';
 import { ettorsWorkspace, vlResultWorkspace } from '../constants';
 import { deleteEncounter } from './encounter.resource';
+import { saveVlTestRequestResult } from '../api/api';
 
 interface EncounterActionMenuProps {
   encounter: OpenmrsEncounter;
@@ -17,7 +18,35 @@ interface EncounterActionMenuProps {
 export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }: EncounterActionMenuProps) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
+  console.log('Patient:', patientUuid);
+  // const handleCancelOrder = async () => {
+  //   const abortController = new AbortController(); // Create an AbortController instance
+  //   const clearedPayload = {
+  //     encounterId: encounter.encounterId,
+  //     patientUUID: patientUuid,
+  //     specimenCollectedDate: null,
+  //     specimenType: null,
+  //     providerPhoneNo: null,
+  //     requestedDate: encounter.requestedDate,
+  //     orderStatus: 'INCOMPLETE',
+  //     requestedBy: null,
+  //     specimenSentToReferralDate: null,
+  //   };
 
+  //   try {
+  //     // Call the save function
+  //     console.log("Patient-UUID", encounter);
+  //     console.log("the cleared payload", clearedPayload);
+  //     await saveVlTestRequestResult(abortController, clearedPayload);
+
+  //     // Optionally refresh the UI or show a success message
+  //     mutateEncounters();
+  //     console.log('Order successfully canceled and cleared');
+  //   } catch (error) {
+  //     console.error('Error canceling and clearing order:', error);
+  //     // Optionally show an error message to the user
+  //   }
+  // };
   const launchEditEncounterForm = useCallback(() => {
     launchPatientWorkspace(ettorsWorkspace, {
       workspaceTitle: t('editEncounter', 'Edit Encounter'),
@@ -68,23 +97,40 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
           className={styles.menuItem}
           id="editEncounter"
           onClick={launchEditEncounterForm}
-          itemText={t('edit', 'Modify order')}
+          itemText={
+            encounter.exchangeStatus === 'SENT'
+              ? t('viewOrder', 'View Order')
+              : encounter.orderStatus === 'INCOMPLETE'
+              ? t('completeOrder', 'Complete Order')
+              : t('modifyOrder', 'Edit Order')
+          }
         />
         <OverflowMenuItem
           className={styles.menuItem}
           id="addEncounter"
           onClick={launchAddVLResultForm}
-          itemText={t('edit', 'Add result')}
+          //itemText={t('edit', 'Add result')}
+          itemText={
+            encounter.resultStatus === 'MANUAL_ETTORS'
+              ? t('editResult', 'Edit Result')
+              : encounter.resultStatus === '--'
+              ? t('editResult', 'Add Result')
+              : t('view', 'View result')
+          }
+          disabled={encounter.orderStatus === 'INCOMPLETE'}
         />
+        {/* {encounter.orderStatus === 'COMPLETE' && encounter.exchangeStatus !== 'SENT' && (
         <OverflowMenuItem
           className={styles.menuItem}
           id="deleteEncounter"
-          itemText={t('delete', 'Delete')}
-          onClick={() => launchDeleteEncounterDialog(encounter.uuid)}
+          itemText={t('cancelOrder', 'Cancel Order')}
+          //onClick={() => launchDeleteEncounterDialog(encounter.uuid)}
+          onClick={handleCancelOrder}
           isDelete
           hasDivider
-          aria-label={t('deleteEncounter', 'Cancel order')} // Added aria-label for accessibility
+          aria-label={t('cancelOrder', 'Cancel Order')}
         />
+      )} */}
       </OverflowMenu>
     </Layer>
   );
