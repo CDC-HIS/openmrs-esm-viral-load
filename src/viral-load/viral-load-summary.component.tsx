@@ -183,7 +183,6 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                       //const foundRow = vlTestRequestData.find((item) => item.uuid === row.id);
                       //console.log("typeof item.uuid", item.uuid);
                       const tableRowData = tableRows.find((rowData) => rowData.id === row.id) || {};
-                      console.log('PATIENT-ID', patientUuid);
                       const {
                         encounterId,
                         uuid,

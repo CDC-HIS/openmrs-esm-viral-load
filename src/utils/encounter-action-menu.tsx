@@ -18,7 +18,6 @@ interface EncounterActionMenuProps {
 export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }: EncounterActionMenuProps) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
-  console.log('Patient:', patientUuid);
   // const handleCancelOrder = async () => {
   //   const abortController = new AbortController(); // Create an AbortController instance
   //   const clearedPayload = {
