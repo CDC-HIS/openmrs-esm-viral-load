@@ -69,7 +69,7 @@ interface ViralLoadResultFormProps {
 
 const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, encounter }) => {
   const { t } = useTranslation();
- 
+
   const [testDate, settestDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const today = new Date();
@@ -96,18 +96,36 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isMale, setIsMale] = useState(false);
 
-  const { encounterId, resultDate, id, resultStatus, exchangeStatus,
-    reviewedBy, aletSentDate, dispatchedDate, labId, labName, 
-    specimenReceivedDate, reasonQuality, instrumentUsed, temperatureOnArrival, 
-    resultReachedToFacDate, resultReceivedByFacility, testResult, testedBy, requestedDate, orderStatus
-    } = encounter;
+  const {
+    encounterId,
+    resultDate,
+    id,
+    resultStatus,
+    exchangeStatus,
+    reviewedBy,
+    aletSentDate,
+    dispatchedDate,
+    labId,
+    labName,
+    specimenReceivedDate,
+    reasonQuality,
+    instrumentUsed,
+    temperatureOnArrival,
+    resultReachedToFacDate,
+    resultReceivedByFacility,
+    testResult,
+    testedBy,
+    requestedDate,
+    orderStatus,
+    specimenSentToReferralDateGC,
+  } = encounter;
   const isSaveDisabled = resultStatus === 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
   const isRequestSent = exchangeStatus === 'SENT';
   const isRequestComplete = orderStatus === 'INCOMPLETE';
-  
+
   // Fetch patient encounters
-  const { mutate} = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
-  
+  const { mutate } = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
+
   // useEffect(() => {
   //   (async function () {
   //     const facilityInformation = await fetchLocation();
@@ -119,12 +137,11 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   //     });
   //   })();
   // }, []);
-  
+
   // Load existing encounter data if editing
   // useEffect(() => {
   //   if (encounter) {
-      
-      
+
   //     const requestedDateObs = getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate);
   //     if (requestedDateObs && dayjs(requestedDateObs).isValid()) {
   //       setValue('requestedDate', dayjs(requestedDateObs).format('YYYY-MM-DD'));
@@ -134,7 +151,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   //     } else {
   //       setValue('requestedDate', ''); // or any default value like null or empty string
   //     }
-      
+
   //     setValue(
   //       'testedBy',
   //       encounter?.obs?.find((e) => e?.concept?.uuid === viralLoadFieldConcepts.testedBy)?.value || '',
@@ -147,47 +164,40 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   // }, [encounter, setValue]);
 
   useEffect(() => {
-    if (encounter) {      
+    if (encounter) {
       //const { id,resultDate, reqDate, requestedDate, dateOfSampleCollectionDate, dateOfSpecimenSent, providerName, providerTelephoneNumber } = encounter;
-            
+
       if (resultDate && dayjs(resultDate).isValid()) {
         setValue('testDate', dayjs(resultDate).format('YYYY-MM-DD'));
         settestDate(dayjs(resultDate).format('YYYY-MM-DD'));
-        
       } else {
         setValue('testDate', ''); // or default value
       }
 
-      if(testResult !== '--')
-      {
+      if (testResult !== '--') {
         setValue('viralLoadCount', testResult);
-      }
-      else
-      {
+      } else {
         setValue('viralLoadCount', '');
       }
-      
-      if (testedBy !== '--')
-      {
+
+      if (testedBy !== '--') {
         setValue('testedBy', testedBy);
-      }
-      else
-      {
+      } else {
         setValue('testedBy', '');
       }
-      
+
       setValue('reviewedBy', reviewedBy);
 
       if (aletSentDate && dayjs(aletSentDate).isValid()) {
         setValue('panicAlertSent', dayjs(aletSentDate).format('YYYY-MM-DD'));
-        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));
       } else {
         setValue('panicAlertSent', ''); // or default value
       }
 
       if (dispatchedDate && dayjs(dispatchedDate).isValid()) {
         setValue('dispatchDate', dayjs(dispatchedDate).format('YYYY-MM-DD'));
-        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));
       } else {
         setValue('dispatchDate', ''); // or default value
       }
@@ -197,7 +207,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
 
       if (specimenReceivedDate && dayjs(specimenReceivedDate).isValid()) {
         setValue('specimenReceivedDate', dayjs(specimenReceivedDate).format('YYYY-MM-DD'));
-        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));
       } else {
         setValue('specimenReceivedDate', ''); // or default value
       }
@@ -208,17 +218,41 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
 
       if (resultReachedToFacDate && dayjs(resultReachedToFacDate).isValid()) {
         setValue('resultReceivedDate', dayjs(resultReachedToFacDate).format('YYYY-MM-DD'));
-        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));        
+        //settestDate(dayjs(aletSentDate).format('YYYY-MM-DD'));
       } else {
         setValue('resultReceivedDate', ''); // or default value
       }
 
       setValue('resultReceivedBy', resultReceivedByFacility);
-
     }
-  }, [encounter, setValue, aletSentDate, dispatchedDate, labId, labName, reasonQuality, resultDate, resultReachedToFacDate, resultReceivedByFacility, reviewedBy, specimenReceivedDate, temperatureOnArrival, testResult, testedBy]);
-  
-  type DateFieldKey = 'testDate' | 'requestedDate' | 'panicAlertSent' | 'dispatchDate' | 'resultReceivedDate' | 'specimenReceivedDate' | 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'requestedDate';
+  }, [
+    encounter,
+    setValue,
+    aletSentDate,
+    dispatchedDate,
+    labId,
+    labName,
+    reasonQuality,
+    resultDate,
+    resultReachedToFacDate,
+    resultReceivedByFacility,
+    reviewedBy,
+    specimenReceivedDate,
+    temperatureOnArrival,
+    testResult,
+    testedBy,
+  ]);
+
+  type DateFieldKey =
+    | 'testDate'
+    | 'requestedDate'
+    | 'panicAlertSent'
+    | 'dispatchDate'
+    | 'resultReceivedDate'
+    | 'specimenReceivedDate'
+    | 'dateOfSpecimenSent'
+    | 'dateOfSampleCollectionDate'
+    | 'requestedDate';
 
   const onDateChange = (value: any, dateField: DateFieldKey) => {
     try {
@@ -226,9 +260,10 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       if (isNaN(jsDate.getTime())) {
         throw new Error('Invalid Date');
       }
-      const formattedDate = dateField === 'dateOfSampleCollectionDate'
-      ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss')  // Include time for datetime field
-      : dayjs(jsDate).format('YYYY-MM-DD');
+      const formattedDate =
+        dateField === 'dateOfSampleCollectionDate'
+          ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss') // Include time for datetime field
+          : dayjs(jsDate).format('YYYY-MM-DD');
       setValue(dateField, formattedDate); // Dynamically set the value based on the field
       setError(null);
     } catch (e) {
@@ -252,7 +287,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
 
   const handleFormSubmit = async (fieldValues: ResultFormInputs) => {
     const obs = [];
-    
+
     // Prepare observations from field values
     Object.keys(fieldValues).forEach((key) => {
       if (fieldValues[key]) {
@@ -297,30 +332,29 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       temperatureOnArrival: fieldValues.tempratureOnArrival || '',
       resultReachedToFacDate: fieldValues.resultReceivedDate || '',
       resultReceivedByFacility: fieldValues.resultReceivedBy || '',
-      resultStatus: "MANUAL_ETTORS"
+      resultStatus: 'MANUAL_ETTORS',
     };
     const apiPayload = {
       ...vlResultPayload,
       patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
     };
     delete apiPayload.patientUuid;
-    
 
     try {
       await saveVlTestResult(new AbortController(), apiPayload, id);
-    showSnackbar({
-      isLowContrast: true,
-      title: t('saveEntry', 'Record Saved'),
-      kind: 'success',
-      subtitle: t('viralLoadTestResultSavedSuccessfully', 'The viral load test result has been saved.'),
-    });
-  //     saveVlTestResult(abortController, vlResultPayload, id)
-  // .then((response) => {
-  //   console.log('Saved VL Test Request Result:', response);
-  // })
-  // .catch((error) => {
-  //   console.error('Failed to save:', error);
-  // });
+      showSnackbar({
+        isLowContrast: true,
+        title: t('saveEntry', 'Record Saved'),
+        kind: 'success',
+        subtitle: t('viralLoadTestResultSavedSuccessfully', 'The viral load test result has been saved.'),
+      });
+      //     saveVlTestResult(abortController, vlResultPayload, id)
+      // .then((response) => {
+      //   console.log('Saved VL Test Request Result:', response);
+      // })
+      // .catch((error) => {
+      //   console.error('Failed to save:', error);
+      // });
       // Check if we are editing an existing encounter
       // if (encounter?.uuid) {
       //   // Update the existing encounter
@@ -377,11 +411,12 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                   //labelText={t('testDate', 'Test Date')}
                   labelText={
                     <>
-                      {t('testDate', 'Test Date:')} 
+                      {t('testDate', 'Test Date:')}
                       <span className={styles.required}>*</span>
                     </>
                   }
                   value={value}
+                  minDate={specimenSentToReferralDateGC}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'testDate')}
                   ref={ref}
@@ -392,30 +427,41 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
           </ResponsiveWrapper>
         </section>
         <section>
-        <ResponsiveWrapper>
-        <Controller
-          control={control}
-          name="viralLoadCount"
-          render={({ field }) => (
-            <NumberInput
-              allowEmpty
-              className={styles.numberInput}
-              disableWheel
-              hideSteppers
-              id="viralLoadCount"
-              //key={concept.uuid}
-              label="Test Result"
-              labelText={
+          <ResponsiveWrapper>
+            <Controller
+              control={control}
+              name="viralLoadCount"
+              rules={{
+                required: 'Test result is required', // Optional: Customize this validation message
+                validate: (value) => {
+                  // Ensure the value is a non-negative integer
+                  return Number.isInteger(Number(value)) && Number(value) >= 0
+                    ? true
+                    : 'Please enter a valid number (0 or greater, no fractions)';
+                },
+              }}
+              render={({ field, fieldState: { error } }) => (
                 <>
-                  <span className={styles.required}>*</span>
+                  <NumberInput
+                    allowEmpty
+                    className={styles.numberInput}
+                    disableWheel
+                    hideSteppers
+                    id="viralLoadCount"
+                    label={
+                      <>
+                        {t('testResult', 'Test Result')}
+                        <span className={styles.required}>*</span>
+                      </>
+                    }
+                    onChange={(event) => field.onChange(event.target.value)}
+                    value={field.value || ''}
+                  />
+                  {error && <span className={styles.error}>{error.message}</span>}
                 </>
-              }
-              onChange={(event) => field.onChange(event.target.value)}
-              value={field.value || ''}
+              )}
             />
-          )}
-        />
-        </ResponsiveWrapper>
+          </ResponsiveWrapper>
         </section>
         <section className={styles.formGroup}>
           <ResponsiveWrapper>
@@ -455,41 +501,55 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        <section>
           <ResponsiveWrapper>
             <Controller
               name="panicAlertSent"
               control={control}
-              render={({ field: { onChange, value, ref } }) => (
-                <OpenmrsDatePicker
-                  id="panicAlertSent"
-                  labelText={t('panicAlertSent', 'Panic value alert sent')}
-                  value={value}
-                  maxDate={today}
-                  onChange={(date) => onDateChange(date, 'panicAlertSent')}
-                  ref={ref}
-                  invalidText={error}
-                />
-              )}
+              render={({ field: { onChange, value, ref }, fieldState }) => {
+                const testDate = watch('testDate');
+                return (
+                  <>
+                    <OpenmrsDatePicker
+                      id="panicAlertSent"
+                      labelText={t('panicAlertSent', 'Panic value alert sent')}
+                      value={value}
+                      minDate={testDate}
+                      maxDate={today}
+                      onChange={(date) => onDateChange(date, 'panicAlertSent')}
+                      ref={ref}
+                      invalid={!!fieldState.error}
+                    />
+                    {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                  </>
+                );
+              }}
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        <section>
           <ResponsiveWrapper>
             <Controller
               name="dispatchDate"
               control={control}
-              render={({ field: { onChange, value, ref } }) => (
-                <OpenmrsDatePicker
-                  id="dispatchDate"
-                  labelText={t('dispatchDate', 'Dispatch date')}
-                  value={value}
-                  maxDate={today}
-                  onChange={(date) => onDateChange(date, 'dispatchDate')}
-                  ref={ref}
-                  invalidText={error}
-                />
-              )}
+              render={({ field: { onChange, value, ref }, fieldState }) => {
+                const testDate = watch('testDate');
+                return (
+                  <>
+                    <OpenmrsDatePicker
+                      id="dispatchDate"
+                      labelText={t('dispatchDate', 'Dispatch date')}
+                      value={value}
+                      minDate={testDate}
+                      maxDate={today}
+                      onChange={(date) => onDateChange(date, 'dispatchDate')}
+                      ref={ref}
+                      invalid={!!fieldState.error}
+                    />
+                    {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                  </>
+                );
+              }}
             />
           </ResponsiveWrapper>
         </section>
@@ -531,22 +591,29 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        <section>
           <ResponsiveWrapper>
             <Controller
               name="specimenReceivedDate"
               control={control}
-              render={({ field: { onChange, value, ref } }) => (
-                <OpenmrsDatePicker
-                  id="specimenReceivedDate"
-                  labelText={t('specimenReceivedDate', 'Specimen received date')}
-                  value={value}
-                  maxDate={today}
-                  onChange={(date) => onDateChange(date, 'specimenReceivedDate')}
-                  ref={ref}
-                  invalidText={error}
-                />
-              )}
+              render={({ field: { onChange, value, ref }, fieldState }) => {
+                const testDate = watch('testDate');
+                return (
+                  <>
+                    <OpenmrsDatePicker
+                      id="specimenReceivedDate"
+                      labelText={t('specimenReceivedDate', 'Specimen received date')}
+                      value={value}
+                      minDate={testDate}
+                      maxDate={today}
+                      onChange={(date) => onDateChange(date, 'specimenReceivedDate')}
+                      ref={ref}
+                      invalid={!!fieldState.error}
+                    />
+                    {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                  </>
+                );
+              }}
             />
           </ResponsiveWrapper>
         </section>
@@ -650,7 +717,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                   <legend id="instrumentUsedLegend" style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
                     Instrument Used
                   </legend>
-                  
+
                   {/* Abbot Checkbox */}
                   <Checkbox
                     id="instrumentUsedAbbot"
@@ -658,12 +725,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     checked={value.includes('Abbot')}
                     onChange={(event) => {
                       const newValue = event.target.checked
-                        ? value ? `${value}, Abbot` : 'Abbot' // Append 'Abbot' if checked
+                        ? value
+                          ? `${value}, Abbot`
+                          : 'Abbot' // Append 'Abbot' if checked
                         : value.replace(', Abbot', '').replace('Abbot', ''); // Remove 'Abbot' if unchecked
                       onChange(newValue);
                     }}
                   />
-                  
+
                   {/* Roche Checkbox */}
                   <Checkbox
                     id="instrumentUsedRoche"
@@ -671,12 +740,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     checked={value.includes('Roche')}
                     onChange={(event) => {
                       const newValue = event.target.checked
-                        ? value ? `${value}, Roche` : 'Roche' // Append 'Roche' if checked
+                        ? value
+                          ? `${value}, Roche`
+                          : 'Roche' // Append 'Roche' if checked
                         : value.replace(', Roche', '').replace('Roche', ''); // Remove 'Roche' if unchecked
                       onChange(newValue);
                     }}
                   />
-                  
+
                   {/* Xpert Checkbox */}
                   <Checkbox
                     id="instrumentUsedXpert"
@@ -684,12 +755,13 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     checked={value.includes('Xpert')}
                     onChange={(event) => {
                       const newValue = event.target.checked
-                        ? value ? `${value}, Xpert` : 'Xpert' // Append 'Xpert' if checked
+                        ? value
+                          ? `${value}, Xpert`
+                          : 'Xpert' // Append 'Xpert' if checked
                         : value.replace(', Xpert', '').replace('Xpert', ''); // Remove 'Xpert' if unchecked
                       onChange(newValue);
                     }}
                   />
-                  
                 </div>
               )}
             />
@@ -714,22 +786,29 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             />
           </ResponsiveWrapper>
         </section>
-        <section className={styles.formGroup}>
+        <section>
           <ResponsiveWrapper>
             <Controller
               name="resultReceivedDate"
               control={control}
-              render={({ field: { onChange, value, ref } }) => (
-                <OpenmrsDatePicker
-                  id="resultReceivedDate"
-                  labelText={t('resultReceivedDate', 'Date result reached to Facility')}
-                  value={value}
-                  maxDate={today}
-                  onChange={(date) => onDateChange(date, 'resultReceivedDate')}
-                  ref={ref}
-                  invalidText={error}
-                />
-              )}
+              render={({ field: { onChange, value, ref }, fieldState }) => {
+                const testDate = watch('testDate');
+                return (
+                  <>
+                    <OpenmrsDatePicker
+                      id="resultReceivedDate"
+                      labelText={t('resultReceivedDate', 'Date result reached to Facility')}
+                      value={value}
+                      minDate={testDate}
+                      maxDate={today}
+                      onChange={(date) => onDateChange(date, 'resultReceivedDate')}
+                      ref={ref}
+                      invalid={!!fieldState.error}
+                    />
+                    {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                  </>
+                );
+              }}
             />
           </ResponsiveWrapper>
         </section>
@@ -761,11 +840,17 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
           >
             {t('discard', 'Discard')}
           </Button>
-          <Button disabled={isSaveDisabled || isRequestSent || isRequestComplete} style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
+          <Button
+            disabled={isSaveDisabled || isRequestSent || isRequestComplete}
+            style={{ maxWidth: 'none', width: '50%' }}
+            className={styles.button}
+            kind="primary"
+            type="submit"
+          >
             {encounter ? t('saveAndClose', 'Save and close') : t('saveAndClose', 'Save and close')}
           </Button>
         </ButtonSet>
-        </Stack>
+      </Stack>
     </Form>
   );
 };
