@@ -138,7 +138,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     if (requestedDate && dayjs(requestedDate).isValid()) {
       setValue('reqDate', dayjs(requestedDate).format('YYYY-MM-DD'));
       setrequestedDate(dayjs(requestedDate).format('YYYY-MM-DD'));
-      console.log('reqDate:', requestedDate);
     } else {
       setValue('reqDate', ''); // or default value
     }
