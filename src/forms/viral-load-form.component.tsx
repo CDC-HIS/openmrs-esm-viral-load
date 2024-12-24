@@ -169,6 +169,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     requestedBy,
     specimenCollectedDate,
     specimenSentToReferralDate,
+    requestedDate,
   ]);
 
   type DateFieldKey = 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'reqDate';
