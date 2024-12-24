@@ -9,43 +9,66 @@ import { ettorsWorkspace, vlResultWorkspace } from '../constants';
 import { deleteEncounter } from './encounter.resource';
 import { saveVlTestRequestResult } from '../api/api';
 
-interface EncounterActionMenuProps {
-  encounter: OpenmrsEncounter;
-  patientUuid?: string;
-  mutateEncounters: () => void;
+interface CustomTableProps {
+  uuid: string;
+  patientUUID: string;
+  encounterId: string;
+  facilityCode: string;
+  requestedDate: string;
+  regimen: string;
+  dateInitiated: string;
+  currentArtAdherence: string;
+  pregnancy: string;
+  breastFeeding: string;
+  cd4MostRecent: string;
+  cd4MostRecentDate: string;
+  cd4BaselineResult: string;
+  cd4BaselineResultDate: string;
+  whoStaging: string;
+  routineVl: string;
+  targeted: string;
+  specimenCollectedDate: string;
+  specimenType: string;
+  specimenSentToReferralDate: string;
+  shipmentTemperature: string;
+  labId: string;
+  labName: string;
+  specimenReceivedDate: string;
+  temperatureOnArrival: string;
+  specimenQuality: string;
+  reason: string;
+  instrumentUsed: string;
+  testResult: string;
+  testedBy: string;
+  reviewedBy: string;
+  dispatchedDate: string;
+  aletSentDate: string;
+  routineVLPregnantMother: string;
+  resultReachedToFacDate: string;
+  resultReceivedByFacility: string;
+  attachedToPatientDate: string;
+  communicatedToPatientDate: string;
+  testResultDate: string;
+  requestId: string;
+  responseId: string;
+  orderStatus: string;
+  resultStatus: string;
+  requestedBy: string;
+  exchangeStatus: string;
+  followUpDate: string;
+  patientId: string;
+  providerPhoneNo: string;
+  resourceVersion: string;
 }
 
-export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }: EncounterActionMenuProps) => {
+interface EncounterActionMenuProps {
+  encounter: CustomTableProps;
+  patientUuid?: string;
+}
+
+export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionMenuProps) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
-  // const handleCancelOrder = async () => {
-  //   const abortController = new AbortController(); // Create an AbortController instance
-  //   const clearedPayload = {
-  //     encounterId: encounter.encounterId,
-  //     patientUUID: patientUuid,
-  //     specimenCollectedDate: null,
-  //     specimenType: null,
-  //     providerPhoneNo: null,
-  //     requestedDate: encounter.requestedDate,
-  //     orderStatus: 'INCOMPLETE',
-  //     requestedBy: null,
-  //     specimenSentToReferralDate: null,
-  //   };
-
-  //   try {
-  //     // Call the save function
-  //     console.log("Patient-UUID", encounter);
-  //     console.log("the cleared payload", clearedPayload);
-  //     await saveVlTestRequestResult(abortController, clearedPayload);
-
-  //     // Optionally refresh the UI or show a success message
-  //     mutateEncounters();
-  //     console.log('Order successfully canceled and cleared');
-  //   } catch (error) {
-  //     console.error('Error canceling and clearing order:', error);
-  //     // Optionally show an error message to the user
-  //   }
-  // };
   const launchEditEncounterForm = useCallback(() => {
     launchPatientWorkspace(ettorsWorkspace, {
       workspaceTitle: t('editEncounter', 'Edit Encounter'),
@@ -74,7 +97,6 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
           // Call the deleteEncounter function
           await deleteEncounter(patientUuid ?? '', encounterUuid, abortController);
           // Call mutateEncounters to reload the list
-          mutateEncounters();
 
           dispose(); // Close the modal after success
         } catch (error) {
@@ -114,22 +136,12 @@ export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }
               ? t('editResult', 'Edit Result')
               : encounter.resultStatus === '--'
               ? t('editResult', 'Add Result')
+              : encounter.resultStatus === null
+              ? t('editResult', 'Add Result')
               : t('view', 'View result')
           }
           disabled={encounter.orderStatus === 'INCOMPLETE'}
         />
-        {/* {encounter.orderStatus === 'COMPLETE' && encounter.exchangeStatus !== 'SENT' && (
-        <OverflowMenuItem
-          className={styles.menuItem}
-          id="deleteEncounter"
-          itemText={t('cancelOrder', 'Cancel Order')}
-          //onClick={() => launchDeleteEncounterDialog(encounter.uuid)}
-          onClick={handleCancelOrder}
-          isDelete
-          hasDivider
-          aria-label={t('cancelOrder', 'Cancel Order')}
-        />
-      )} */}
       </OverflowMenu>
     </Layer>
   );

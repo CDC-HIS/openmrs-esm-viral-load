@@ -17,8 +17,13 @@ import { formatDate, parseDate, restBaseUrl, useLayoutType } from '@openmrs/esm-
 import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
-import { useEncounters } from './viral-load.resource';
-import { VIRALLOAD_ENCOUNTER_TYPE_UUID, viralLoadFieldConcepts, ettorsWorkspace, FOLLOWUP_ENCOUNTER_TYPE_UUID } from '../constants';
+import { useVLRequestOrders } from './viral-load.resource';
+import {
+  VIRALLOAD_ENCOUNTER_TYPE_UUID,
+  viralLoadFieldConcepts,
+  ettorsWorkspace,
+  FOLLOWUP_ENCOUNTER_TYPE_UUID,
+} from '../constants';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { fetchPatientData } from '../api/api';
@@ -30,10 +35,7 @@ interface HivCareAndTreatmentProps {
 const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
   const headerTitle = 'Current ART Information';
-  const { encounters, isError, isValidating, mutate } = useEncounters(
-    patientUuid,
-    FOLLOWUP_ENCOUNTER_TYPE_UUID,
-  );
+  const { vlRequestOrders, isError, isLoading: isLoadingVLRequests } = useVLRequestOrders(patientUuid);
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
@@ -94,39 +96,39 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     // { key: 'routingVlTest', header: 'Routine VL Test' },
     // { key: 'targetedVlTest', header: 'Targeted VL Test' },
     { key: 'regimen', header: 'Regimen' },
-  { key: 'currentRegimenInitiatedDate', header: 'Initiated Date' },
-  { key: 'pregnant', header: 'Pregnant?' },
-  { key: 'breastFeeding', header: 'Breast Feeding?' },
-  { key: 'cd4', header: 'CD4 result' },
-  { key: 'followUpStatus', header: 'Followup Status' },
-  // { key: 'reasonForVlTest', header: 'Reason for VL Test' },
+    { key: 'currentRegimenInitiatedDate', header: 'Initiated Date' },
+    { key: 'pregnant', header: 'Pregnant?' },
+    { key: 'breastFeeding', header: 'Breast Feeding?' },
+    { key: 'cd4', header: 'CD4 result' },
+    { key: 'followUpStatus', header: 'Followup Status' },
+    // { key: 'reasonForVlTest', header: 'Reason for VL Test' },
   ];
 
   const tableRows = patientData
-  ? patientData.map((patient, index) => ({
-      id: patient.patientUUID || index,
-      regimen: patient.regimen || null,
-      currentRegimenInitiatedDate: patient.currentRegimenInitiatedDate
-        ? formatDate(parseDate(patient.currentRegimenInitiatedDate), { mode: 'wide' })
-        : null,
-      followUpStatus: patient.followUpStatus,
-      pregnant: patient.pregnancyStatus !== null ? patient.pregnancyStatus : null,
-      breastFeeding: patient.breastFeeding !== null ? patient.breastFeeding : null,
-      cd4:
-        patient.cd4AboveFiveAgeCount != null
-          ? patient.cd4AboveFiveAgeCount
-          : patient.cd4ForChild != null
-          ? patient.cd4ForChild
+    ? patientData.map((patient, index) => ({
+        id: patient.patientUUID || index,
+        regimen: patient.regimen || null,
+        currentRegimenInitiatedDate: patient.currentRegimenInitiatedDate
+          ? formatDate(parseDate(patient.currentRegimenInitiatedDate), { mode: 'wide' })
           : null,
-      // reasonForVlTest:
-      //   patient.routingVlTest != null
-      //     ? patient.routingVlTest
-      //     : patient.targetedVlTest != null
-      //     ? patient.targetedVlTest
-      //     : null,
-    }))
-  : [];
-  
+        followUpStatus: patient.followUpStatus,
+        pregnant: patient.pregnancyStatus !== null ? patient.pregnancyStatus : null,
+        breastFeeding: patient.breastFeeding !== null ? patient.breastFeeding : null,
+        cd4:
+          patient.cd4AboveFiveAgeCount != null
+            ? patient.cd4AboveFiveAgeCount
+            : patient.cd4ForChild != null
+            ? patient.cd4ForChild
+            : null,
+        // reasonForVlTest:
+        //   patient.routingVlTest != null
+        //     ? patient.routingVlTest
+        //     : patient.targetedVlTest != null
+        //     ? patient.targetedVlTest
+        //     : null,
+      }))
+    : [];
+
   // patientData?.length ? patientData.map((data, index) => ({
   //   id: `row-${index}`,
   //   artInitiatedDate: data.artInitiatedDate,
@@ -156,7 +158,6 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     <div className={styles.widgetCard}>
       <CardHeader title={headerTitle}>
         <span></span>
-        
       </CardHeader>
       {currentRows.length > 0 ? (
         <>
@@ -167,9 +168,7 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                   <TableHead>
                     <TableRow>
                       {headers.map((header) => (
-                        <TableHeader {...getHeaderProps({ header })}>
-                          {header.header}
-                        </TableHeader>
+                        <TableHeader {...getHeaderProps({ header })}>{header.header}</TableHeader>
                       ))}
                     </TableRow>
                   </TableHead>

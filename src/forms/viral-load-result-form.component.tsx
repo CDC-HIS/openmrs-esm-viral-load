@@ -22,7 +22,7 @@ import {
   viralLoadFieldConcepts,
 } from '../constants';
 import dayjs from 'dayjs';
-import { useEncounters } from '../viral-load/viral-load.resource';
+import { useVLRequestOrders } from '../viral-load/viral-load.resource';
 import type { OpenmrsEncounter } from '../types';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { ButtonSet } from '@carbon/react';
@@ -99,7 +99,9 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const {
     encounterId,
     resultDate,
+    testResultDate,
     id,
+    uuid,
     resultStatus,
     exchangeStatus,
     reviewedBy,
@@ -117,14 +119,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     testedBy,
     requestedDate,
     orderStatus,
-    specimenSentToReferralDateGC,
+    specimenSentToReferralDate,
   } = encounter;
   const isSaveDisabled = resultStatus === 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
   const isRequestSent = exchangeStatus === 'SENT';
   const isRequestComplete = orderStatus === 'INCOMPLETE';
 
   // Fetch patient encounters
-  const { mutate } = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
+  const { vlRequestOrders, isError, mutate } = useVLRequestOrders(patientUuid);
 
   // useEffect(() => {
   //   (async function () {
@@ -167,9 +169,9 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     if (encounter) {
       //const { id,resultDate, reqDate, requestedDate, dateOfSampleCollectionDate, dateOfSpecimenSent, providerName, providerTelephoneNumber } = encounter;
 
-      if (resultDate && dayjs(resultDate).isValid()) {
-        setValue('testDate', dayjs(resultDate).format('YYYY-MM-DD'));
-        settestDate(dayjs(resultDate).format('YYYY-MM-DD'));
+      if (testResultDate && dayjs(testResultDate).isValid()) {
+        setValue('testDate', dayjs(testResultDate).format('YYYY-MM-DD'));
+        settestDate(dayjs(testResultDate).format('YYYY-MM-DD'));
       } else {
         setValue('testDate', ''); // or default value
       }
@@ -233,7 +235,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     labId,
     labName,
     reasonQuality,
-    resultDate,
+    testResultDate,
     resultReachedToFacDate,
     resultReceivedByFacility,
     reviewedBy,
@@ -341,7 +343,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     delete apiPayload.patientUuid;
 
     try {
-      await saveVlTestResult(new AbortController(), apiPayload, id);
+      await saveVlTestResult(new AbortController(), apiPayload, uuid);
       showSnackbar({
         isLowContrast: true,
         title: t('saveEntry', 'Record Saved'),
@@ -416,7 +418,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     </>
                   }
                   value={value}
-                  minDate={specimenSentToReferralDateGC}
+                  minDate={specimenSentToReferralDate}
                   maxDate={today}
                   onChange={(date) => onDateChange(date, 'testDate')}
                   ref={ref}

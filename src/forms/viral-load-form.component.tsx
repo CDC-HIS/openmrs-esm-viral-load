@@ -30,7 +30,7 @@ import {
   viralLoadFieldConcepts,
 } from '../constants';
 import dayjs from 'dayjs';
-import { useEncounters } from '../viral-load/viral-load.resource';
+import { useVLRequestOrders } from '../viral-load/viral-load.resource';
 import type { OpenmrsEncounter } from '../types';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { ButtonSet } from '@carbon/react';
@@ -58,7 +58,7 @@ type FormInputs = Record<
   | 'dateOfSpecimenSent'
   | 'specimenType'
   | 'providerName'
-  | 'requestedDate',
+  | 'reqDate',
   string
 >;
 
@@ -71,7 +71,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const { t } = useTranslation();
   const [dateOfSampleCollection, setdateOfSampleCollection] = useState<string | null>(null);
   const [dateOfSpecimenSent, setdateOfSpecimenSent] = useState<string | null>(null);
-  const [requestedDate, setrequestedDate] = useState<string | null>(null);
+  const [reqDate, setrequestedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const today = new Date();
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -109,10 +109,10 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     exchangeStatus,
     encounterId,
     id,
-    reqDate,
-    specimenCollectedDateGC,
+    requestedDate,
+    specimenCollectedDate,
     providerPhoneNo,
-    specimenSentToReferralDateGC,
+    specimenSentToReferralDate,
     requestedBy,
   } = encounter;
   const isSaveDisabled = exchangeStatus === 'SENT';
@@ -125,7 +125,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   });
 
   // Fetch patient encounters
-  const { encounters, isError, isLoading, mutate } = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
+  const { vlRequestOrders, isError, isLoading: isLoadingVLRequests, mutate } = useVLRequestOrders(patientUuid);
 
   useEffect(() => {
     (async function () {
@@ -135,15 +135,16 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
   // Load existing encounter data if editing
   useEffect(() => {
-    if (reqDate && dayjs(reqDate).isValid()) {
-      setValue('requestedDate', dayjs(reqDate).format('YYYY-MM-DD'));
-      setrequestedDate(dayjs(reqDate).format('YYYY-MM-DD'));
+    if (requestedDate && dayjs(requestedDate).isValid()) {
+      setValue('reqDate', dayjs(requestedDate).format('YYYY-MM-DD'));
+      setrequestedDate(dayjs(requestedDate).format('YYYY-MM-DD'));
+      console.log('reqDate:', requestedDate);
     } else {
-      setValue('requestedDate', ''); // or default value
+      setValue('reqDate', ''); // or default value
     }
 
-    if (specimenCollectedDateGC && dayjs(specimenCollectedDateGC).isValid()) {
-      setValue('dateOfSampleCollectionDate', dayjs(specimenCollectedDateGC).format('YYYY-MM-DD'));
+    if (specimenCollectedDate && dayjs(specimenCollectedDate).isValid()) {
+      setValue('dateOfSampleCollectionDate', dayjs(specimenCollectedDate).format('YYYY-MM-DD'));
     } else {
       setValue('dateOfSampleCollectionDate', ''); // or default value
     }
@@ -155,8 +156,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
     //setValue('specimenType', specimenTypeMapDB[specimenType]);
 
-    if (specimenSentToReferralDateGC && dayjs(specimenSentToReferralDateGC).isValid()) {
-      setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDateGC).format('YYYY-MM-DD'));
+    if (specimenSentToReferralDate && dayjs(specimenSentToReferralDate).isValid()) {
+      setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDate).format('YYYY-MM-DD'));
     } else {
       setValue('dateOfSpecimenSent', ''); // or default value
     }
@@ -167,11 +168,11 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     reqDate,
     providerPhoneNo,
     requestedBy,
-    specimenCollectedDateGC,
-    specimenSentToReferralDateGC,
+    specimenCollectedDate,
+    specimenSentToReferralDate,
   ]);
 
-  type DateFieldKey = 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'requestedDate';
+  type DateFieldKey = 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'reqDate';
 
   const onDateChange = (value: any, dateField: DateFieldKey) => {
     try {
@@ -223,7 +224,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       specimenSentToReferralDate: fieldValues.dateOfSpecimenSent,
       specimenType: specimenTypeMapDB[fieldValues.specimenType],
       requestedBy: fieldValues.providerName,
-      requestedDate: fieldValues.requestedDate,
+      requestedDate: fieldValues.reqDate,
       providerPhoneNo: fieldValues.providerTelephoneNumber,
       orderStatus: 'COMPLETE',
     };
@@ -240,9 +241,9 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
         .then((response) => {
           showSnackbar({
             isLowContrast: true,
-            title: t('updatedEntry', 'Record Updated'),
+            title: t('updatedEntry', 'Order Updated'),
             kind: 'success',
-            subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
+            subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient vl-order was updated'),
           });
           mutate();
           closeWorkspaceHandler('ettors-workspace');
@@ -285,7 +286,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               }}
               render={({ field: { onChange, value, ref }, fieldState }) => {
                 const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
-                const requestDate = watch('requestedDate');
+                const requestDate = watch('reqDate');
                 return (
                   <>
                     <OpenmrsDatePicker
@@ -321,7 +322,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               }}
               render={({ field: { onChange, value, ref }, fieldState }) => {
                 const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
-                const requestDate = watch('requestedDate');
+                const requestDate = watch('reqDate');
                 return (
                   <>
                     <OpenmrsDatePicker
@@ -455,22 +456,22 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
         <section>
           <ResponsiveWrapper>
             <Controller
-              name="requestedDate"
+              name="reqDate"
               control={control}
               render={({ field: { onChange, value, ref }, fieldState }) => (
                 <>
                   <OpenmrsDatePicker
-                    id="requestedDate"
+                    id="reqDate"
                     //labelText={t('requestedDate', 'Requested Date:')}
                     labelText={
                       <>
-                        {t('requestedDate', 'Requested Date:')}
+                        {t('reqDate', 'Requested Date:')}
                         <span className={styles.required}>*</span>
                       </>
                     }
                     value={value}
                     maxDate={today}
-                    onChange={(date) => onDateChange(date, 'requestedDate')}
+                    onChange={(date) => onDateChange(date, 'reqDate')}
                     ref={ref}
                     invalidText={error}
                     isDisabled={true}

@@ -17,7 +17,7 @@ import { formatDate, parseDate, useLayoutType } from '@openmrs/esm-framework';
 import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
-import { useEncounters } from './viral-load.resource';
+import { useVLRequestOrders } from './viral-load.resource';
 import { VIRALLOAD_ENCOUNTER_TYPE_UUID, viralLoadFieldConcepts, ettorsWorkspace } from '../constants';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
@@ -33,7 +33,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const { t } = useTranslation();
   const displayText = 'Viral Load Order Result';
   const headerTitle = 'Viral Load Order Result';
-  const { encounters, isError, isValidating, mutate } = useEncounters(patientUuid, VIRALLOAD_ENCOUNTER_TYPE_UUID);
+  const { vlRequestOrders, isError, isValidating } = useVLRequestOrders(patientUuid);
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
@@ -41,19 +41,19 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const launchViralLoadForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
 
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);
 
   useEffect(() => {
     const getVlTestRequestData = async () => {
       try {
-        setIsLoading(true);
+        setIsLoadingTestData(true);
         const data = await fetchVlTestRequestResult(patientUuid);
         setVlTestRequestData(data);
       } catch (error) {
         console.error('Error fetching VL Test Request data:', error);
         setVlTestRequestData([]);
       } finally {
-        setIsLoading(false);
+        setIsLoadingTestData(false);
       }
     };
 
@@ -72,8 +72,8 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   ];
 
   const tableRows = useMemo(() => {
-    return vlTestRequestData
-      ? vlTestRequestData.map((item, index) => ({
+    return vlRequestOrders
+      ? vlRequestOrders.map((item, index) => ({
           id: item.uuid || index,
           followUpDate: item.followUpDate ? formatDate(parseDate(item.followUpDate), { mode: 'wide' }) : null,
           encounterId: item.encounterId,
@@ -110,13 +110,13 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
           resultReceivedByFacility: item.resultReceivedByFacility,
         }))
       : [];
-  }, [vlTestRequestData]);
+  }, [vlRequestOrders]);
 
   const sortedRows = useMemo(() => {
-    return tableRows.sort((a, b) => {
-      const dateA = new Date(a.encounterDatetime).getTime();
-      const dateB = new Date(b.encounterDatetime).getTime();
-      return dateB - dateA;
+    return tableRows.sort((b, a) => {
+      const dateA = new Date(a.followUpDate).getTime();
+      const dateB = new Date(b.followUpDate).getTime();
+      return dateA - dateB;
     });
   }, [tableRows]);
 
@@ -140,143 +140,114 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   };
 
   // Error handling for loading and error states
-  if (isLoading) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
+  if (isLoadingTestData) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
   if (isError) return <ErrorState error={isError} headerTitle={headerTitle} />;
 
-  return (
-    <div className={styles.widgetCard}>
-      <CardHeader title={headerTitle}>{isValidating && <InlineLoading />}</CardHeader>
-      {currentRows.length > 0 ? (
-        <>
-          <DataTable
-            filterRows={handleFilter}
-            rows={currentRows}
-            headers={tableHeaders}
-            useZebraStyles
-            size={isTablet ? 'lg' : 'sm'}
-          >
-            {({ rows, headers, getHeaderProps, getRowProps, getTableProps, getExpandedRowProps }) => (
-              <TableContainer>
-                <Table aria-label="Viral Load" {...getTableProps()}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell />
-                      {headers.map((header) => (
-                        <TableHeader
-                          {...getHeaderProps({
-                            header,
-                            isSortable: header.isSortable,
-                          })}
-                        >
-                          {header.header?.content ?? header.header}
-                        </TableHeader>
-                      ))}
-                      <TableHeader />
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map((row) => {
-                      const foundEncounter = encounters.find((encounter) => encounter.uuid === row.id);
-                      // const resultDate = tableRows.find((rowData) => rowData.id === row.id)?.resultDate ?? '--';
-                      // const viralLoadCount = tableRows.find((rowData) => rowData.id === row.id)?.viralLoadCount ?? '--';
-                      // const testedBy = tableRows.find((rowData) => rowData.id === row.id)?.testedBy ?? '--';
-                      //const foundRow = vlTestRequestData.find((item) => item.uuid === row.id);
-                      //console.log("typeof item.uuid", item.uuid);
-                      const tableRowData = tableRows.find((rowData) => rowData.id === row.id) || {};
-                      const {
-                        encounterId,
-                        uuid,
-                        reqDate,
-                        testResultDate,
-                        resultDate,
-                        testResult,
-                        specimenCollectedDateGC,
-                        specimenType,
-                        providerPhoneNo,
-                        orderStatus,
-                        specimenSentToReferralDateGC,
-                        requestedBy,
-                        testedBy,
-                        resultStatus,
-                        requestedDate,
-                        reviewedBy,
-                        aletSentDate,
-                        dispatchedDate,
-                        labId,
-                        labName,
-                        specimenReceivedDate,
-                        reasonQuality,
-                        instrumentUsed,
-                        temperatureOnArrival,
-                        resultReachedToFacDate,
-                        resultReceivedByFacility,
-                        exchangeStatus,
-                      } = tableRowData;
-                      return (
-                        <React.Fragment key={row.id}>
-                          <TableExpandRow className={styles.row} {...getRowProps({ row })}>
-                            {/* First cell for expand icon */}
+  if (vlRequestOrders?.length) {
+    return (
+      <div className={styles.widgetCard}>
+        <CardHeader title={headerTitle}>{isValidating && <InlineLoading />}</CardHeader>
+        {currentRows.length > 0 ? (
+          <>
+            <DataTable
+              filterRows={handleFilter}
+              rows={currentRows}
+              headers={tableHeaders}
+              useZebraStyles
+              size={isTablet ? 'lg' : 'sm'}
+            >
+              {({ rows, headers, getHeaderProps, getRowProps, getTableProps, getExpandedRowProps }) => (
+                <TableContainer>
+                  <Table aria-label="Viral Load" {...getTableProps()}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell />
+                        {headers.map((header) => (
+                          <TableHeader
+                            {...getHeaderProps({
+                              header,
+                              isSortable: header.isSortable,
+                            })}
+                          >
+                            {header.header?.content ?? header.header}
+                          </TableHeader>
+                        ))}
+                        <TableHeader />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {rows.map((row) => {
+                        const tableRowData = tableRows?.find((vlRequestOrders) => vlRequestOrders.id === row.id) || {};
+                        const { testResultDate, testResult, testedBy, resultStatus } = tableRowData as {
+                          testResultDate?: string;
+                          testResult?: string;
+                          testedBy?: string;
+                          resultStatus?: string;
+                        };
 
-                            {row.cells.map((cell) => (
-                              <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
-                            ))}
-                            <TableCell className="cds--table-column-menu">
-                              <EncounterActionMenu
-                                patientUuid={patientUuid}
-                                encounter={tableRowData}
-                                mutateEncounters={mutate}
-                              />
-                            </TableCell>
-                          </TableExpandRow>
+                        return (
+                          <React.Fragment key={row.id}>
+                            <TableExpandRow className={styles.row} {...getRowProps({ row })}>
+                              {row.cells.map((cell) => (
+                                <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
+                              ))}
+                              <TableCell className="cds--table-column-menu">
+                                <EncounterActionMenu
+                                  patientUuid={patientUuid}
+                                  encounter={vlRequestOrders?.find((rowData) => rowData.uuid === row.id)}
+                                />
+                              </TableCell>
+                            </TableExpandRow>
 
-                          {row.isExpanded && (
-                            <TableExpandedRow colSpan={headers.length + 2} {...getExpandedRowProps({ row })}>
-                              <div className={styles.expandedRowContent}>
-                                {/* Table layout for expanded row content */}
-                                <TableContainer>
-                                  <Table size="sm">
-                                    <TableHead>
-                                      <TableRow>
-                                        <TableHeader>Test Date</TableHeader>
-                                        <TableHeader>Test Result</TableHeader>
-                                        <TableHeader>Tested By</TableHeader>
-                                        <TableHeader>Result Status</TableHeader>
-                                      </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                      <TableRow>
-                                        <TableCell>{testResultDate}</TableCell>
-                                        <TableCell>{testResult}</TableCell>
-                                        <TableCell>{testedBy}</TableCell>
-                                        <TableCell>{resultStatus}</TableCell>
-                                      </TableRow>
-                                    </TableBody>
-                                  </Table>
-                                </TableContainer>
-                              </div>
-                            </TableExpandedRow>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </DataTable>
-          <Pagination
-            page={currentPage}
-            pageSize={rowsPerPage}
-            totalItems={totalRows}
-            onChange={({ page }) => setCurrentPage(page)}
-            pageSizes={[5, 10, 15]}
-          />
-        </>
-      ) : (
-        <div></div>
-      )}
-    </div>
-  );
+                            {row.isExpanded && (
+                              <TableExpandedRow colSpan={headers.length + 2} {...getExpandedRowProps({ row })}>
+                                <div className={styles.expandedRowContent}>
+                                  <TableContainer>
+                                    <Table size="sm">
+                                      <TableHead>
+                                        <TableRow>
+                                          <TableHeader>Test Date</TableHeader>
+                                          <TableHeader>Test Result</TableHeader>
+                                          <TableHeader>Tested By</TableHeader>
+                                          <TableHeader>Result Status</TableHeader>
+                                        </TableRow>
+                                      </TableHead>
+                                      <TableBody>
+                                        <TableRow>
+                                          <TableCell>{testResultDate ?? '--'}</TableCell>
+                                          <TableCell>{testResult}</TableCell>
+                                          <TableCell>{testedBy}</TableCell>
+                                          <TableCell>{resultStatus}</TableCell>
+                                        </TableRow>
+                                      </TableBody>
+                                    </Table>
+                                  </TableContainer>
+                                </div>
+                              </TableExpandedRow>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}{' '}
+                    </TableBody>{' '}
+                  </Table>
+                </TableContainer>
+              )}
+            </DataTable>
+            <Pagination
+              page={currentPage}
+              pageSize={rowsPerPage}
+              totalItems={totalRows}
+              onChange={({ page }) => setCurrentPage(page)}
+              pageSizes={[10, 20, 30, 50]}
+            />
+          </>
+        ) : (
+          <div></div>
+        )}
+      </div>
+    );
+  }
+  return <div></div>;
 };
 
 export default ViralLoadSummary;
