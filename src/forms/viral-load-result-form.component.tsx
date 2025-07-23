@@ -110,6 +110,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     labId,
     labName,
     specimenReceivedDate,
+    specimenQuality,
     reasonQuality,
     instrumentUsed,
     temperatureOnArrival,
@@ -213,9 +214,10 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       } else {
         setValue('specimenReceivedDate', ''); // or default value
       }
+      setValue('specimenQuality', specimenQuality);
 
       setValue('reason', reasonQuality);
-      //setValue('instrumentUsed', instrumentUsed);
+      setValue('instrumentUsed', instrumentUsed);
       setValue('tempratureOnArrival', temperatureOnArrival);
 
       if (resultReachedToFacDate && dayjs(resultReachedToFacDate).isValid()) {
