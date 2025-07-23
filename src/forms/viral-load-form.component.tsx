@@ -41,6 +41,7 @@ import { Dropdown } from '@carbon/react';
 import { Checkbox } from '@carbon/react';
 import { FormGroup } from '@carbon/react';
 import { errors } from '@playwright/test';
+import { InlineLoading } from '@carbon/react';
 
 interface ResponsiveWrapperProps {
   children: React.ReactNode;
@@ -103,6 +104,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [showChildDatePicker, setShowChildDatePicker] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isMale, setIsMale] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     specimenType,
     orderStatus,
@@ -115,7 +117,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     specimenSentToReferralDate,
     requestedBy,
   } = encounter;
-  const isSaveDisabled = exchangeStatus === 'SENT';
+  const isSaveDisabled = exchangeStatus === 'SENT' || exchangeStatus === 'RECEIVED';
 
   const { clearErrors } = useForm({
     defaultValues: {
@@ -234,6 +236,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
     };
     delete apiPayload.patientUuid;
+    setIsSubmitting(true);
 
     try {
       // Check if we are editing an existing encounter
@@ -257,6 +260,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       return true;
     } catch (error) {
       console.error('Error saving encounter:', error);
+    } finally {
+      setIsSubmitting(false); // Reset submitting state
     }
   };
 
@@ -513,13 +518,20 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
             {t('discard', 'Discard')}
           </Button>
           <Button
-            disabled={isSaveDisabled}
+            disabled={isSaveDisabled || isSubmitting}
             style={{ maxWidth: 'none', width: '50%' }}
             className={styles.button}
             kind="primary"
             type="submit"
           >
-            {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')}
+            {isSubmitting ? (
+              <InlineLoading />
+            ) : encounter ? (
+              t('saveAndClose', 'Complete Order')
+            ) : (
+              t('saveAndClose', 'Update Order')
+            )}
+            {/* {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')} */}
           </Button>
         </ButtonSet>
 

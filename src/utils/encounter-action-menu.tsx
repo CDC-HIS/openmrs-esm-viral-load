@@ -121,6 +121,8 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
           itemText={
             encounter.exchangeStatus === 'SENT'
               ? t('viewOrder', 'View Order')
+              : encounter.exchangeStatus === 'RECEIVED'
+              ? t('viewOrder', 'View Order')
               : encounter.orderStatus === 'INCOMPLETE'
               ? t('completeOrder', 'Complete Order')
               : t('modifyOrder', 'Edit Order')
