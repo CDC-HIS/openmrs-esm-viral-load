@@ -245,6 +245,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     temperatureOnArrival,
     testResult,
     testedBy,
+    specimenQuality,
+    instrumentUsed,
   ]);
 
   type DateFieldKey =
