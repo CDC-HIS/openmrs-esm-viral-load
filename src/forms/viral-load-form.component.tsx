@@ -82,11 +82,27 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [facilityLocationName, setFacilityLocationName] = useState('');
   const [selectedField, setSelectedField] = useState<keyof FormInputs | null>(null);
 
-  const specimenTypeMapDB = {
+  // const specimenTypeMapDB = {
+  //   DBS: 'DBS',
+  //   'Whole blood': 'Whole blood',
+  //   Plasma: 'Plasma',
+  //   'DPS (Dried Plasma Spot)': 'DPS (Dried Plasma Spot)',
+  // };
+
+  // For displaying radio buttons (UI)
+  const specimenTypeDisplayMap = {
     DBS: 'DBS',
     'Whole blood': 'Whole blood',
     Plasma: 'Plasma',
     'DPS (Dried Plasma Spot)': 'DPS (Dried Plasma Spot)',
+  };
+
+  // For saving to DB
+  const specimenTypeSaveMap = {
+    DBS: 'DBS',
+    'Whole blood': 'Whole blood',
+    Plasma: 'Plasma',
+    'DPS (Dried Plasma Spot)': 'DPS',
   };
 
   const encounterDatetime = new Date().toISOString();
@@ -153,7 +169,13 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     setValue('providerTelephoneNumber', providerPhoneNo);
     setValue('providerName', requestedBy);
 
-    setValue('specimenType', specimenType);
+    const specimenTypeValueFromDB = specimenType;
+    // Convert "DPS" → "DPS (Dried Plasma Spot)" for radio button
+    const initialSpecimenType = specimenTypeValueFromDB === 'DPS' ? 'DPS (Dried Plasma Spot)' : specimenTypeValueFromDB;
+
+    setValue('specimenType', initialSpecimenType);
+
+    // setValue('specimenType', specimenType);
 
     //setValue('specimenType', specimenTypeMapDB[specimenType]);
 
@@ -224,7 +246,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       patientUuid,
       specimenCollectedDate: fieldValues.dateOfSampleCollectionDate,
       specimenSentToReferralDate: fieldValues.dateOfSpecimenSent,
-      specimenType: specimenTypeMapDB[fieldValues.specimenType],
+      specimenType: specimenTypeSaveMap[fieldValues.specimenType],
       requestedBy: fieldValues.providerName,
       requestedDate: fieldValues.reqDate,
       providerPhoneNo: fieldValues.providerTelephoneNumber,
@@ -433,7 +455,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               valueSelected={field.value}
               onChange={(value) => field.onChange(value)}
             >
-              {Object.entries(specimenTypeMapDB).map(([key, label]) => (
+              {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
                 <RadioButton key={key} id={key} labelText={label} value={key} />
               ))}
             </RadioButtonGroup>
