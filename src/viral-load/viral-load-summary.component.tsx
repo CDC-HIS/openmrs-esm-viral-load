@@ -161,7 +161,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                   <Table aria-label="Viral Load" {...getTableProps()}>
                     <TableHead>
                       <TableRow>
-                        <TableCell />
+                        <TableCell className={styles.header} />
                         {headers.map((header) => (
                           <TableHeader
                             {...getHeaderProps({

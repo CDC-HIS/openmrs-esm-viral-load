@@ -27,8 +27,9 @@
       "online": true,
       "offline": true,
       "meta": {
-        "columnSpan": 4
-      }
+        "fullWidth": true
+      },
+      "order": 1
     },
     {
       "name": "ettors-summary-widget",
@@ -37,8 +38,9 @@
       "online": true,
       "offline": true,
       "meta": {
-        "columnSpan": 4
-      }
+        "fullWidth": true
+      },
+      "order": 2
     },    
     {
       "name": "ettors-summary-dashboard",

@@ -10,7 +10,7 @@ import {
 } from '@openmrs/esm-framework';
 import type { CloseWorkspaceOptions } from '@openmrs/esm-framework';
 import { Form } from '@carbon/react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
@@ -31,6 +31,7 @@ import { RadioButtonGroup } from '@carbon/react';
 import { RadioButton } from '@carbon/react';
 import { Dropdown } from '@carbon/react';
 import { Checkbox } from '@carbon/react';
+import { InlineLoading } from '@carbon/react';
 
 interface ResponsiveWrapperProps {
   children: React.ReactNode;
@@ -81,6 +82,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const [selectedField, setSelectedField] = useState<keyof ResultFormInputs | null>(null);
 
   const encounterDatetime = new Date().toISOString();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const encounterProviders = [
     { provider: 'caa66686-bde7-4341-a330-91b7ad0ade07', encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66' },
@@ -110,6 +112,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     labId,
     labName,
     specimenReceivedDate,
+    specimenQuality,
     reasonQuality,
     instrumentUsed,
     temperatureOnArrival,
@@ -121,9 +124,10 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     orderStatus,
     specimenSentToReferralDate,
   } = encounter;
-  const isSaveDisabled = resultStatus === 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
-  const isRequestSent = exchangeStatus === 'SENT';
-  const isRequestComplete = orderStatus === 'INCOMPLETE';
+  const isSaveDisabled = resultStatus == 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
+  const editResult = resultStatus === 'MANUAL_ETTORS';
+  // const isRequestSent = exchangeStatus === 'SENT';
+  // const isRequestComplete = orderStatus === 'INCOMPLETE';
 
   // Fetch patient encounters
   const { vlRequestOrders, isError, mutate } = useVLRequestOrders(patientUuid);
@@ -213,9 +217,15 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       } else {
         setValue('specimenReceivedDate', ''); // or default value
       }
+      if (specimenQuality) {
+        setValue('specimenQuality', specimenQuality);
+      }
 
       setValue('reason', reasonQuality);
-      //setValue('instrumentUsed', instrumentUsed);
+      if (instrumentUsed) {
+        setValue('instrumentUsed', instrumentUsed);
+      }
+
       setValue('tempratureOnArrival', temperatureOnArrival);
 
       if (resultReachedToFacDate && dayjs(resultReachedToFacDate).isValid()) {
@@ -243,6 +253,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     temperatureOnArrival,
     testResult,
     testedBy,
+    specimenQuality,
+    instrumentUsed,
   ]);
 
   type DateFieldKey =
@@ -286,6 +298,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       ? new Date(value.startDate.getTime() - value.startDate?.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
       : value;
   };
+  const resultFormInputs = useWatch({ control });
 
   const handleFormSubmit = async (fieldValues: ResultFormInputs) => {
     const obs = [];
@@ -328,7 +341,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       labId: fieldValues.labID || '',
       labName: fieldValues.testingLabName || '',
       specimenReceivedDate: fieldValues.specimenReceivedDate || '',
-      specimenQuality: fieldValues.specimenQuality || '',
+      specimenQuality: fieldValues.specimenQuality,
       reason: fieldValues.reason || '',
       instrumentUsed: fieldValues.instrumentUsed || '',
       temperatureOnArrival: fieldValues.tempratureOnArrival || '',
@@ -341,6 +354,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
     };
     delete apiPayload.patientUuid;
+    setIsSubmitting(true);
 
     try {
       await saveVlTestResult(new AbortController(), apiPayload, uuid);
@@ -383,6 +397,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       return true;
     } catch (error) {
       console.error('Error saving encounter:', error);
+    } finally {
+      setIsSubmitting(false); // Reset submitting state
     }
   };
 
@@ -843,13 +859,20 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
             {t('discard', 'Discard')}
           </Button>
           <Button
-            disabled={isSaveDisabled || isRequestSent || isRequestComplete}
+            disabled={isSaveDisabled || isSubmitting}
             style={{ maxWidth: 'none', width: '50%' }}
             className={styles.button}
             kind="primary"
             type="submit"
           >
-            {encounter ? t('saveAndClose', 'Save and close') : t('saveAndClose', 'Save and close')}
+            {isSubmitting ? (
+              <InlineLoading />
+            ) : editResult ? (
+              t('saveAndClose', 'Update Result')
+            ) : (
+              t('saveAndClose', 'Save Result')
+            )}
+            {/* {encounter ? <InlineLoading /> : encounter ? t('saveAndClose', 'Save and close') : t('saveAndClose', 'Save and close')} */}
           </Button>
         </ButtonSet>
       </Stack>

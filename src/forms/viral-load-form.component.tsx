@@ -41,6 +41,7 @@ import { Dropdown } from '@carbon/react';
 import { Checkbox } from '@carbon/react';
 import { FormGroup } from '@carbon/react';
 import { errors } from '@playwright/test';
+import { InlineLoading } from '@carbon/react';
 
 interface ResponsiveWrapperProps {
   children: React.ReactNode;
@@ -81,11 +82,27 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [facilityLocationName, setFacilityLocationName] = useState('');
   const [selectedField, setSelectedField] = useState<keyof FormInputs | null>(null);
 
-  const specimenTypeMapDB = {
+  // const specimenTypeMapDB = {
+  //   DBS: 'DBS',
+  //   'Whole blood': 'Whole blood',
+  //   Plasma: 'Plasma',
+  //   'DPS (Dried Plasma Spot)': 'DPS (Dried Plasma Spot)',
+  // };
+
+  // For displaying radio buttons (UI)
+  const specimenTypeDisplayMap = {
     DBS: 'DBS',
     'Whole blood': 'Whole blood',
     Plasma: 'Plasma',
     'DPS (Dried Plasma Spot)': 'DPS (Dried Plasma Spot)',
+  };
+
+  // For saving to DB
+  const specimenTypeSaveMap = {
+    DBS: 'DBS',
+    'Whole blood': 'Whole blood',
+    Plasma: 'Plasma',
+    'DPS (Dried Plasma Spot)': 'DPS',
   };
 
   const encounterDatetime = new Date().toISOString();
@@ -103,6 +120,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [showChildDatePicker, setShowChildDatePicker] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isMale, setIsMale] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     specimenType,
     orderStatus,
@@ -115,7 +133,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     specimenSentToReferralDate,
     requestedBy,
   } = encounter;
-  const isSaveDisabled = exchangeStatus === 'SENT';
+  const isSaveDisabled = exchangeStatus === 'SENT' || exchangeStatus === 'RECEIVED';
 
   const { clearErrors } = useForm({
     defaultValues: {
@@ -151,7 +169,13 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     setValue('providerTelephoneNumber', providerPhoneNo);
     setValue('providerName', requestedBy);
 
-    setValue('specimenType', specimenType);
+    const specimenTypeValueFromDB = specimenType;
+    // Convert "DPS" → "DPS (Dried Plasma Spot)" for radio button
+    const initialSpecimenType = specimenTypeValueFromDB === 'DPS' ? 'DPS (Dried Plasma Spot)' : specimenTypeValueFromDB;
+
+    setValue('specimenType', initialSpecimenType);
+
+    // setValue('specimenType', specimenType);
 
     //setValue('specimenType', specimenTypeMapDB[specimenType]);
 
@@ -222,7 +246,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       patientUuid,
       specimenCollectedDate: fieldValues.dateOfSampleCollectionDate,
       specimenSentToReferralDate: fieldValues.dateOfSpecimenSent,
-      specimenType: specimenTypeMapDB[fieldValues.specimenType],
+      specimenType: specimenTypeSaveMap[fieldValues.specimenType],
       requestedBy: fieldValues.providerName,
       requestedDate: fieldValues.reqDate,
       providerPhoneNo: fieldValues.providerTelephoneNumber,
@@ -234,6 +258,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
     };
     delete apiPayload.patientUuid;
+    setIsSubmitting(true);
 
     try {
       // Check if we are editing an existing encounter
@@ -257,6 +282,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       return true;
     } catch (error) {
       console.error('Error saving encounter:', error);
+    } finally {
+      setIsSubmitting(false); // Reset submitting state
     }
   };
 
@@ -428,7 +455,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               valueSelected={field.value}
               onChange={(value) => field.onChange(value)}
             >
-              {Object.entries(specimenTypeMapDB).map(([key, label]) => (
+              {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
                 <RadioButton key={key} id={key} labelText={label} value={key} />
               ))}
             </RadioButtonGroup>
@@ -513,13 +540,20 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
             {t('discard', 'Discard')}
           </Button>
           <Button
-            disabled={isSaveDisabled}
+            disabled={isSaveDisabled || isSubmitting}
             style={{ maxWidth: 'none', width: '50%' }}
             className={styles.button}
             kind="primary"
             type="submit"
           >
-            {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')}
+            {isSubmitting ? (
+              <InlineLoading />
+            ) : encounter ? (
+              t('saveAndClose', 'Complete Order')
+            ) : (
+              t('saveAndClose', 'Update Order')
+            )}
+            {/* {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')} */}
           </Button>
         </ButtonSet>
 
