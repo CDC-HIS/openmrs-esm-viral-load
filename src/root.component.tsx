@@ -10,10 +10,6 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Boxes } from './boxes/slot/boxes.component';
-import Greeter from './greeter/greeter.component';
-import PatientGetter from './patient-getter/patient-getter.component';
-import Resources from './resources/resources.component';
 import styles from './root.scss';
 
 const Root: React.FC = () => {
@@ -25,13 +21,6 @@ const Root: React.FC = () => {
       <p className={styles.explainer}>
         {t('explainer', 'The following examples demonstrate some key features of the O3 framework')}.
       </p>
-      {/* Greeter: demonstrates the configuration system */}
-      <Greeter />
-      {/* Boxes: demonstrates the extension system */}
-      <Boxes />
-      {/* PatientGetter: demonstrates data fetching */}
-      <PatientGetter />
-      <Resources />
     </div>
   );
 };

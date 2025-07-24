@@ -3,4 +3,5 @@ export const dashboardMeta = {
   columns: 1,
   path: 'ettors',
   title: 'Viral Load',
+  icon: '',
 };

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Button,
   DataTable,
   TableContainer,
   Table,
@@ -12,18 +11,15 @@ import {
   Pagination,
 } from '@carbon/react';
 import { DataTableSkeleton, InlineLoading } from '@carbon/react';
-import { Add } from '@carbon/react/icons';
-import { formatDate, parseDate, useLayoutType } from '@openmrs/esm-framework';
-import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import { formatDate, launchWorkspace, parseDate, useLayoutType } from '@openmrs/esm-framework';
+import { CardHeader, ErrorState } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
 import { useVLRequestOrders } from './viral-load.resource';
-import { VIRALLOAD_ENCOUNTER_TYPE_UUID, viralLoadFieldConcepts, ettorsWorkspace } from '../constants';
-import { getObsFromEncounter } from '../utils/encounter-utils';
+import { ettorsWorkspace } from '../constants';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { TableExpandRow, TableExpandedRow } from '@carbon/react';
-import debounce from 'lodash.debounce';
-import { fetchPatientData, fetchVlTestRequestResult } from '../api/api';
+import { fetchVlTestRequestResult } from '../api/api';
 
 interface HivCareAndTreatmentProps {
   patientUuid: string;
@@ -38,7 +34,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-  const launchViralLoadForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
+  const launchViralLoadForm = useCallback(() => launchWorkspace(ettorsWorkspace), []);
 
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
   const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);

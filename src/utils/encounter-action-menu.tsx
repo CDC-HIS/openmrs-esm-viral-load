@@ -1,13 +1,10 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Layer, OverflowMenu, OverflowMenuItem } from '@carbon/react';
-import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
-import { showModal, useLayoutType } from '@openmrs/esm-framework';
+import { launchWorkspace, showModal, useLayoutType } from '@openmrs/esm-framework';
 import styles from './encounter-action-menu.scss';
-import { type OpenmrsEncounter } from '../types';
 import { ettorsWorkspace, vlResultWorkspace } from '../constants';
 import { deleteEncounter } from './encounter.resource';
-import { saveVlTestRequestResult } from '../api/api';
 
 interface CustomTableProps {
   uuid: string;
@@ -70,7 +67,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const launchEditEncounterForm = useCallback(() => {
-    launchPatientWorkspace(ettorsWorkspace, {
+    launchWorkspace(ettorsWorkspace, {
       workspaceTitle: t('editEncounter', 'Edit Encounter'),
       encounter,
       formContext: 'editing',
@@ -78,7 +75,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
   }, [encounter, t]);
 
   const launchAddVLResultForm = useCallback(() => {
-    launchPatientWorkspace(vlResultWorkspace, {
+    launchWorkspace(vlResultWorkspace, {
       workspaceTitle: t('editEncounter', 'Viral Load Result'),
       encounter,
       formContext: 'editing',
