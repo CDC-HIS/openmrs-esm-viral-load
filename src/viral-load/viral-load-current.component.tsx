@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Button,
   DataTable,
   TableContainer,
   Table,
@@ -9,23 +8,14 @@ import {
   TableHeader,
   TableBody,
   TableCell,
-  Pagination,
 } from '@carbon/react';
-import { DataTableSkeleton, InlineLoading } from '@carbon/react';
-import { Add } from '@carbon/react/icons';
-import { formatDate, parseDate, restBaseUrl, useLayoutType } from '@openmrs/esm-framework';
-import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import { DataTableSkeleton } from '@carbon/react';
+import { formatDate, launchWorkspace, parseDate, useLayoutType } from '@openmrs/esm-framework';
+import { CardHeader, EmptyState, ErrorState } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
 import { useVLRequestOrders } from './viral-load.resource';
-import {
-  VIRALLOAD_ENCOUNTER_TYPE_UUID,
-  viralLoadFieldConcepts,
-  ettorsWorkspace,
-  FOLLOWUP_ENCOUNTER_TYPE_UUID,
-} from '../constants';
-import { getObsFromEncounter } from '../utils/encounter-utils';
-import { EncounterActionMenu } from '../utils/encounter-action-menu';
+import { ettorsWorkspace } from '../constants';
 import { fetchPatientData } from '../api/api';
 
 interface HivCareAndTreatmentProps {
@@ -60,7 +50,7 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     getPatientData();
   }, [patientUuid]);
 
-  const launchTransferOutForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
+  const launchTransferOutForm = useCallback(() => launchWorkspace(ettorsWorkspace), []);
 
   // const tableHeaders = [
   //   { key: 'regimen', header: 'Regimen' },
