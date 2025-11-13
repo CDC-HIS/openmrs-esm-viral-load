@@ -42,6 +42,8 @@ import { Checkbox } from '@carbon/react';
 import { FormGroup } from '@carbon/react';
 import { errors } from '@playwright/test';
 import { InlineLoading } from '@carbon/react';
+import { Accordion } from '@carbon/react';
+import { AccordionItem } from '@carbon/react';
 
 interface ResponsiveWrapperProps {
   children: React.ReactNode;
@@ -59,13 +61,32 @@ type FormInputs = Record<
   | 'dateOfSpecimenSent'
   | 'specimenType'
   | 'providerName'
-  | 'reqDate',
+  | 'reqDate'
+  | 'reasonForVlTest'
+  | 'routineVLtest'
+  | 'targetedVLtest',
   string
 >;
 
+type EncounterType = {
+  specimenType?: string;
+  orderStatus?: string;
+  exchangeStatus?: string;
+  encounterId?: string;
+  id?: string;
+  requestedDate?: string;
+  specimenCollectedDate?: string;
+  providerPhoneNo?: string;
+  specimenSentToReferralDate?: string;
+  requestedBy?: string;
+  targeted?: string;
+  routineVl?: string;
+};
+
 interface ViralLoadFormProps {
   patientUuid: string;
-  encounter?: OpenmrsEncounter; // If provided, it means we are editing an encounter
+  encounter?: EncounterType;
+  //encounter?: OpenmrsEncounter; // If provided, it means we are editing an encounter
 }
 
 const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter }) => {
@@ -90,11 +111,18 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   // };
 
   // For displaying radio buttons (UI)
+
+  const selectedReason = watch('reasonForVlTest');
+
   const specimenTypeDisplayMap = {
     DBS: 'DBS',
     'Whole blood': 'Whole blood',
     Plasma: 'Plasma',
     'DPS (Dried Plasma Spot)': 'DPS (Dried Plasma Spot)',
+  };
+  const reasonForVlTestYesNo = {
+    Routine: 'Routine',
+    Targeted: 'Targeted',
   };
 
   // For saving to DB
@@ -104,6 +132,22 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     Plasma: 'Plasma',
     'DPS (Dried Plasma Spot)': 'DPS',
   };
+
+  const routineVlOptions = [
+    'First viral load test at 3 months or longer post ART',
+    'Second viral load test at 12 months post ART',
+    'Annual viral load Test',
+    'Viral load after EAC: repeat viral load where initial viral load greater than 50 and less than 1000 copies per ml',
+    'Viral load after EAC: confirmatory viral load where initial viral load greater than 1000 copies per ml',
+  ];
+
+  const targetedVlOptions = ['Suspected Antiretroviral failure'];
+
+  //   const routineVlMapping: Record<string, string> = {
+  //   'First viral load test at 3 months or longer post ART': 'First viral load test at 3 months or longer post ART',
+  //   'Second VL at 12 months post ART': '2nd VL at 12 months post ART',
+  //   // Add more mappings here as needed
+  // };
 
   const encounterDatetime = new Date().toISOString();
 
@@ -122,17 +166,19 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const [isMale, setIsMale] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
-    specimenType,
-    orderStatus,
-    exchangeStatus,
-    encounterId,
-    id,
-    requestedDate,
-    specimenCollectedDate,
-    providerPhoneNo,
-    specimenSentToReferralDate,
-    requestedBy,
-  } = encounter;
+    specimenType = '',
+    orderStatus = '',
+    exchangeStatus = '',
+    encounterId = 0,
+    id = '',
+    requestedDate = '',
+    specimenCollectedDate = '',
+    providerPhoneNo = '',
+    specimenSentToReferralDate = '',
+    requestedBy = '',
+    targeted = '',
+    routineVl = '',
+  } = encounter || {};
   const isSaveDisabled = exchangeStatus === 'SENT' || exchangeStatus === 'RECEIVED';
 
   const { clearErrors } = useForm({
@@ -151,8 +197,35 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     });
   }, [patientUuid]);
 
+  //const [routineVlOptions, setRoutineVlOptions] = useState<string[]>([]);
+
+  // useEffect(() => {
+  //   const loadRoutineVlOptions = async () => {
+  //     try {
+  //       const resultData = await fetchVlTestRequestResult(patientUuid);
+  //       const uniqueOptions = Array.from(
+  //         new Set(
+  //           resultData
+  //             .map((item: any) => item.routineVl)
+  //             .filter((val): val is string => !!val) // remove null/undefined
+  //         )
+  //       );
+  //       setRoutineVlOptions(uniqueOptions  as string[]);
+  //     } catch (error) {
+  //       console.error('Error loading routine VL options:', error);
+  //     }
+  //   };
+
+  //   loadRoutineVlOptions();
+  // }, [patientUuid]);
+
   // Load existing encounter data if editing
   useEffect(() => {
+    const routineVlMapping: Record<string, string> = {
+      'First viral load test at 3 months or longer post ART': 'First viral load test at 3 months or longer post ART',
+      'Second VL at 12 months post ART': '2nd VL at 12 months post ART',
+      // Add more mappings here as needed
+    };
     if (requestedDate && dayjs(requestedDate).isValid()) {
       setValue('reqDate', dayjs(requestedDate).format('YYYY-MM-DD'));
       setrequestedDate(dayjs(requestedDate).format('YYYY-MM-DD'));
@@ -175,6 +248,26 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
     setValue('specimenType', initialSpecimenType);
 
+    if (routineVl) {
+      setValue('reasonForVlTest', 'Routine');
+    }
+    if (targeted) {
+      setValue('reasonForVlTest', 'Targeted');
+    }
+
+    const mappedValue = routineVlMapping[routineVl] ?? routineVl;
+
+    const routineVlValueFromDB = mappedValue;
+
+    setValue('routineVLtest', routineVlValueFromDB);
+
+    // const reasonValueFromDB = reason;
+    // console.log(reason);
+    // // Convert "DPS" → "DPS (Dried Plasma Spot)" for radio button
+    // const initialReason = reasonValueFromDB;
+
+    // setValue('reasonForVlTest', initialReason);
+
     // setValue('specimenType', specimenType);
 
     //setValue('specimenType', specimenTypeMapDB[specimenType]);
@@ -194,6 +287,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     specimenCollectedDate,
     specimenSentToReferralDate,
     requestedDate,
+    routineVl,
+    targeted,
   ]);
 
   type DateFieldKey = 'dateOfSpecimenSent' | 'dateOfSampleCollectionDate' | 'reqDate';
@@ -243,6 +338,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
     const vlResultPayload = {
       encounterId,
+      routineVl: fieldValues.reasonForVlTest === 'Targeted' ? null : fieldValues.routineVLtest,
+      targeted: fieldValues.reasonForVlTest === 'Routine' ? null : fieldValues.targetedVLtest,
       patientUuid,
       specimenCollectedDate: fieldValues.dateOfSampleCollectionDate,
       specimenSentToReferralDate: fieldValues.dateOfSpecimenSent,
@@ -301,81 +398,284 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   };
 
   return (
-    <Form className={styles.form} onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-form">
-      <Stack gap={1} className={styles.container}>
-        <section className={styles.formGroup}>
-          <ResponsiveWrapper>
-            <Controller
-              name="dateOfSampleCollectionDate"
-              control={control}
-              rules={{
-                required: t('requiredField', 'Date specimen collected is required'), // Ensure the field is required
-              }}
-              render={({ field: { onChange, value, ref }, fieldState }) => {
-                const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
-                const requestDate = watch('reqDate');
-                return (
-                  <>
-                    <OpenmrsDatePicker
-                      id="dateOfSampleCollectionDate"
-                      //labelText={t('dateOfSampleCollection', 'Date specimen collected')}
-                      labelText={
+    <Form onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-form" className={styles.formNew}>
+      <div>
+        <Stack gap={1} className={styles.container}>
+          <Accordion>
+            <AccordionItem title="REQUESTER INFORMATION" open className={styles.formContainer}>
+              <div className={styles.fieldWrapper}>
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="reqDate"
+                      control={control}
+                      render={({ field: { onChange, value, ref }, fieldState }) => (
                         <>
-                          {t('dateOfSampleCollection', 'Date specimen collected:')}
-                          <span className={styles.required}>*</span>
+                          <OpenmrsDatePicker
+                            id="reqDate"
+                            //labelText={t('requestedDate', 'Requested Date:')}
+                            labelText={
+                              <>
+                                {t('reqDate', 'Date VL Requested:')}
+                                <span className={styles.required}>*</span>
+                              </>
+                            }
+                            value={value}
+                            maxDate={today}
+                            onChange={(date) => onDateChange(date, 'reqDate')}
+                            ref={ref}
+                            invalidText={error}
+                            //isDisabled={true}
+                            isRequired={true}
+                          />
+                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
                         </>
-                      }
-                      value={value}
-                      minDate={requestDate}
-                      maxDate={sentDate || today} // Max date is the sent date or today if not set
-                      onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
-                      ref={ref}
-                      invalid={!!fieldState.error}
+                      )}
                     />
-                    {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                  </>
-                );
-              }}
-            />
-          </ResponsiveWrapper>
-        </section>
-        <section>
-          <ResponsiveWrapper>
-            <Controller
-              name="dateOfSpecimenSent"
-              control={control}
-              rules={{
-                required: t('requiredField', 'This field is required'),
-              }}
-              render={({ field: { onChange, value, ref }, fieldState }) => {
-                const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
-                const requestDate = watch('reqDate');
-                return (
-                  <>
-                    <OpenmrsDatePicker
-                      id="dateOfSpecimenSent"
-                      //labelText={t('dateOfSpecimenSent', 'Date specimen sent to referral lab.')}
-                      labelText={
+                  </ResponsiveWrapper>
+                </section>
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="providerName"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="providerName"
+                          value={value}
+                          labelText="Name of Requester:"
+                          placeholder="Requested by"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
+                        />
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="providerTelephoneNumber"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="providerTelephoneNumber"
+                          value={value}
+                          labelText="Mobile Phone Number:"
+                          placeholder="Phone Number"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
+                        />
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+              </div>
+            </AccordionItem>
+            <AccordionItem title="REASON FOR TEST" open className={styles.formContainer}>
+              <Controller
+                name="reasonForVlTest"
+                control={control}
+                rules={{ required: t('required', 'Reason for VL test is required') }}
+                defaultValue=""
+                render={({ field }) => (
+                  <RadioButtonGroup
+                    orientation="vertical"
+                    legendText={
+                      <>
+                        {t('reasonForVlTest', 'Reason for VL test')}
+                        <span className={styles.required}>*</span>
+                      </>
+                    }
+                    {...field}
+                    valueSelected={field.value}
+                    onChange={(value) => field.onChange(value)}
+                  >
+                    {Object.entries(reasonForVlTestYesNo).map(([key, label]) => (
+                      <RadioButton key={key} id={key} labelText={label} value={key} />
+                    ))}
+                  </RadioButtonGroup>
+                )}
+              />
+              {selectedReason === 'Routine' && (
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="routineVLtest"
+                      control={control}
+                      defaultValue={null} // Ensure a default value for the controlled component
+                      render={({ field: { onChange, value }, fieldState: { error } }) => (
+                        <div className={styles.row}>
+                          <Dropdown
+                            id="routineVLtest"
+                            label={t('pleaseSelect', 'Please select')}
+                            titleText={t('routineVLtest', 'Routine VL test')}
+                            items={[
+                              'First viral load test at 3 months or longer post ART',
+                              'Second viral load test at 12 months post ART',
+                              'Annual viral load Test',
+                              'Viral load after EAC: repeat viral load where initial viral load greater than 50 and less than 1000 copies per ml',
+                              'Viral load after EAC: confirmatory viral load where initial viral load greater than 1000 copies per ml',
+                            ]} // Specify the dropdown options
+                            itemToString={(item) => item || ''} // Convert item to string for display
+                            onChange={(event) => onChange(event.selectedItem)} // Handle selection
+                            selectedItem={value || null} // Ensure selectedItem is controlled
+                            invalid={!!error} // Show invalid state if there's an error
+                            invalidText={error?.message} // Display error message
+                          />
+                        </div>
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+              )}
+
+              {selectedReason === 'Targeted' && (
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="targetedVLtest"
+                      control={control}
+                      defaultValue={null} // Ensure a default value for the controlled component
+                      render={({ field: { onChange, value }, fieldState: { error } }) => (
+                        <div className={styles.row}>
+                          <Dropdown
+                            id="targetedVLtest"
+                            label={t('pleaseSelect', 'Please select')}
+                            titleText={t('targetedVLtest', 'Targeted VL test')}
+                            items={['Suspected Antiretroviral failure']} // Specify the dropdown options
+                            itemToString={(item) => item || ''} // Convert item to string for display
+                            onChange={(event) => onChange(event.selectedItem)} // Handle selection
+                            selectedItem={value || null} // Ensure selectedItem is controlled
+                            invalid={!!error} // Show invalid state if there's an error
+                            invalidText={error?.message} // Display error message
+                          />
+                        </div>
+                      )}
+                    />
+                    {/* <Controller
+    name="targetedVLtest"
+    control={control}
+    render={({ field }) => (
+      <Select
+        className={styles.customSelect}
+        id="targetedVLtest"
+        labelText={<span className={styles.label}>{t('targetedVLtest', 'Targeted VL test')}</span>}
+        {...field}
+      >
+        <SelectItem value="" text="Select" />
+        {targetedVlOptions.map(option => (
+          <SelectItem key={option} value={option} text={option} />
+        ))}
+      </Select>
+    )}
+  /> */}
+                  </ResponsiveWrapper>
+                </section>
+              )}
+            </AccordionItem>
+            <AccordionItem title="TO BE FILLED BY REFERRING LABORATORY" open className={styles.formContainer}>
+              <section className={styles.formGroup}>
+                <ResponsiveWrapper>
+                  <Controller
+                    name="dateOfSampleCollectionDate"
+                    control={control}
+                    rules={{
+                      required: t('requiredField', 'Date specimen collected is required'), // Ensure the field is required
+                    }}
+                    render={({ field: { onChange, value, ref }, fieldState }) => {
+                      const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
+                      const requestDate = watch('reqDate');
+                      return (
                         <>
-                          {t('dateOfSpecimenSent', 'Date specimen sent to referral lab:')}
-                          <span className={styles.required}>*</span>
+                          <OpenmrsDatePicker
+                            id="dateOfSampleCollectionDate"
+                            //labelText={t('dateOfSampleCollection', 'Date specimen collected')}
+                            labelText={
+                              <>
+                                {t('dateOfSampleCollection', 'Date Specimen Collected:')}
+                                <span className={styles.required}>*</span>
+                              </>
+                            }
+                            value={value}
+                            minDate={requestDate}
+                            maxDate={sentDate || today} // Max date is the sent date or today if not set
+                            onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
+                            ref={ref}
+                            invalid={!!fieldState.error}
+                          />
+                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
                         </>
-                      }
-                      value={value}
-                      minDate={sampleDate || requestDate} // Min date is the sample collection date or null if not set
-                      maxDate={today}
-                      onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
-                      ref={ref}
-                      invalid={!!fieldState.error}
-                    />
-                    {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                  </>
-                );
-              }}
-            />
-          </ResponsiveWrapper>
-        </section>
-        {/* <section>
+                      );
+                    }}
+                  />
+                </ResponsiveWrapper>
+              </section>
+              <Controller
+                name="specimenType"
+                control={control}
+                rules={{ required: t('required', 'Specimen type is required') }}
+                defaultValue=""
+                render={({ field }) => (
+                  <RadioButtonGroup
+                    orientation="vertical"
+                    legendText={
+                      <>
+                        {t('specimenType', 'Specimen Type')}
+                        <span className={styles.required}>*</span>
+                      </>
+                    }
+                    {...field}
+                    valueSelected={field.value}
+                    onChange={(value) => field.onChange(value)}
+                  >
+                    {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
+                      <RadioButton key={key} id={key} labelText={label} value={key} />
+                    ))}
+                  </RadioButtonGroup>
+                )}
+              />
+              <section className={styles.lastField}>
+                <ResponsiveWrapper>
+                  <Controller
+                    name="dateOfSpecimenSent"
+                    control={control}
+                    rules={{
+                      required: t('requiredField', 'This field is required'),
+                    }}
+                    render={({ field: { onChange, value, ref }, fieldState }) => {
+                      const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
+                      const requestDate = watch('reqDate');
+                      return (
+                        <>
+                          <OpenmrsDatePicker
+                            id="dateOfSpecimenSent"
+                            //labelText={t('dateOfSpecimenSent', 'Date specimen sent to referral lab.')}
+                            labelText={
+                              <>
+                                {t('dateOfSpecimenSent', 'Date Specimen sent to Testing Laboratory:')}
+                                <span className={styles.required}>*</span>
+                              </>
+                            }
+                            value={value}
+                            minDate={sampleDate || requestDate} // Min date is the sample collection date or null if not set
+                            maxDate={today}
+                            onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
+                            ref={ref}
+                            invalid={!!fieldState.error}
+                          />
+                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                        </>
+                      );
+                    }}
+                  />
+                </ResponsiveWrapper>
+              </section>
+            </AccordionItem>
+
+            {/* <section>
         <ResponsiveWrapper>
           <Controller
             name="specimenType"
@@ -437,127 +737,35 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
           />
         </ResponsiveWrapper>
         </section> */}
-        <Controller
-          name="specimenType"
-          control={control}
-          rules={{ required: t('required', 'Specimen type is required') }}
-          defaultValue=""
-          render={({ field }) => (
-            <RadioButtonGroup
-              orientation="vertical"
-              legendText={
-                <>
-                  {t('specimenType', 'Specimen Type')}
-                  <span className={styles.required}>*</span>
-                </>
-              }
-              {...field}
-              valueSelected={field.value}
-              onChange={(value) => field.onChange(value)}
-            >
-              {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
-                <RadioButton key={key} id={key} labelText={label} value={key} />
-              ))}
-            </RadioButtonGroup>
-          )}
-        />
-        <section className={styles.formGroup}>
-          <ResponsiveWrapper>
-            <Controller
-              name="providerName"
-              control={control}
-              render={({ field: { onChange, onBlur, value, ref } }) => (
-                <TextInput
-                  id="providerName"
-                  value={value}
-                  labelText="Requested by:"
-                  placeholder="Requested by"
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  ref={ref}
-                />
-              )}
-            />
-          </ResponsiveWrapper>
-        </section>
-        <section>
-          <ResponsiveWrapper>
-            <Controller
-              name="reqDate"
-              control={control}
-              render={({ field: { onChange, value, ref }, fieldState }) => (
-                <>
-                  <OpenmrsDatePicker
-                    id="reqDate"
-                    //labelText={t('requestedDate', 'Requested Date:')}
-                    labelText={
-                      <>
-                        {t('reqDate', 'Requested Date:')}
-                        <span className={styles.required}>*</span>
-                      </>
-                    }
-                    value={value}
-                    maxDate={today}
-                    onChange={(date) => onDateChange(date, 'reqDate')}
-                    ref={ref}
-                    invalidText={error}
-                    isDisabled={true}
-                    isRequired={true}
-                  />
-                  {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                </>
-              )}
-            />
-          </ResponsiveWrapper>
-        </section>
-        <section className={styles.lastField}>
-          <ResponsiveWrapper>
-            <Controller
-              name="providerTelephoneNumber"
-              control={control}
-              render={({ field: { onChange, onBlur, value, ref } }) => (
-                <TextInput
-                  id="providerTelephoneNumber"
-                  value={value}
-                  labelText="Telephone:"
-                  placeholder="Phone Number"
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  ref={ref}
-                />
-              )}
-            />
-          </ResponsiveWrapper>
-        </section>
 
-        <ButtonSet className={styles.buttonSet}>
-          <Button
-            onClick={() => closeWorkspaceHandler('ettors-workspace')}
-            style={{ maxWidth: 'none', width: '50%' }}
-            className={styles.button}
-            kind="secondary"
-          >
-            {t('discard', 'Discard')}
-          </Button>
-          <Button
-            disabled={isSaveDisabled || isSubmitting}
-            style={{ maxWidth: 'none', width: '50%' }}
-            className={styles.button}
-            kind="primary"
-            type="submit"
-          >
-            {isSubmitting ? (
-              <InlineLoading />
-            ) : encounter ? (
-              t('saveAndClose', 'Complete Order')
-            ) : (
-              t('saveAndClose', 'Update Order')
-            )}
-            {/* {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')} */}
-          </Button>
-        </ButtonSet>
+            <ButtonSet className={styles.buttonSet}>
+              <Button
+                onClick={() => closeWorkspaceHandler('ettors-workspace')}
+                style={{ maxWidth: 'none', width: '50%' }}
+                className={styles.button}
+                kind="secondary"
+              >
+                {t('discard', 'Discard')}
+              </Button>
+              <Button
+                disabled={isSaveDisabled || isSubmitting}
+                style={{ maxWidth: 'none', width: '50%' }}
+                className={styles.button}
+                kind="primary"
+                type="submit"
+              >
+                {isSubmitting ? (
+                  <InlineLoading />
+                ) : encounter ? (
+                  t('saveAndClose', 'Complete Order')
+                ) : (
+                  t('saveAndClose', 'Update Order')
+                )}
+                {/* {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')} */}
+              </Button>
+            </ButtonSet>
 
-        {/* <ButtonSet className={isTablet ? styles.tablet : styles.desktop}>
+            {/* <ButtonSet className={isTablet ? styles.tablet : styles.desktop}>
             <Button
               className={styles.button}
               onClick={() => closeWorkspaceHandler('ettors-workspace')}
@@ -567,10 +775,12 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
             </Button>
             <Button className={styles.button} type="submit">
               {/* {t('saveAndClose', 'Save and close')} */}
-        {/* {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
+            {/* {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
             </Button>
           </ButtonSet>           */}
-      </Stack>
+          </Accordion>
+        </Stack>
+      </div>
     </Form>
   );
 };

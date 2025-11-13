@@ -1,38 +1,108 @@
+ 
 @use '@carbon/layout';
 @use '@openmrs/esm-styleguide/src/vars' as *;
 @use '@carbon/colors';
 @use '@carbon/type';
 
-.container {
-  margin: layout.$spacing-05;
 
+
+:global(.white-date-input input.cds--date-picker__input) {
+  background-color: white !important;
+  --cds-background: white !important;
+  color: #161616 !important;
+  border: 1px solid #8d8d8d; // Optional: makes it look like a normal input
+}
+
+// Also fix hover/focus to stay white
+:global(.white-date-input input.cds--date-picker__input:hover),
+:global(.white-date-input input.cds--date-picker__input:focus) {
+  background-color: white !important;
+  --cds-background: white !important;
+}
+
+:global(.cds--accordion__heading) {
+  background-color: #f4f4f4 !important;
+  border-bottom: 1px solid #e0e0e0; // Optional: for a cleaner separation
+}
+
+// Optional: keep background white on hover/focus
+:global(.cds--accordion__heading:hover),
+:global(.cds--accordion__heading:focus) {
+  background-color: #f4f4f4 !important;
+}
+
+.fieldWrapper input,
+.fieldWrapper .cds--text-input,
+.cds--accordion__heading,
+.cds--accordion__item,
+.fieldWrapper .cds--select-item,
+.fieldWrapper .cds--select-input {
+  background-color: #f4f4f4 !important;
+}
+.fieldWrapper .cds--select-input,
+.fieldWrapper select {
+  background-color: #f4f4f4 !important;
+}
+
+.container { 
   & section {
     margin: layout.$spacing-05 0;
   }
+  
 }
 
+.formContainer {
+  display: flex;
+  flex-direction: column; // Ensures stacked layout
+  gap: layout.$spacing-05; // Carbon spacing token for consistency 
+ 
+}
+.content {
+  flex: 1; /* Make the content div take up available space */
+  margin-bottom: 16px;
+  /* Add any additional styling for the content */
+}
+.buttonContainer {
+  margin-top: auto; /* Push the buttons to the bottom */
+}
 .form {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
+  
 }
+.fieldWrapper {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: flex;
+  flex-direction: row;
+  top: 5px;
+  bottom: 5px;
+  color: black;
+  font-weight:bold;
+}
+.radio {
+  display: flex;
+  flex-direction: row; 
+}
+
 
 .buttonSet {
   position: absolute;
   bottom: 0;
   left: 0;
-  right: 0;
-  margin: 0;
-  padding: 0;
+  right: 0; 
+  width: 100%;
+  z-index: 10;
+
 }
 
 .button {
-  height: layout.$spacing-10;
-  display: flex;
-  align-content: flex-start;
-  align-items: baseline;
-  width: auto;
+  height: layout.$spacing-10; 
+  flex: 1;
 }
 
 .tablet {
@@ -47,6 +117,7 @@
 .dateTimeSection {
   display: flex;
   gap: layout.$spacing-04;
+  background-color: #ffffff !important;
 
   & > div:first-child {
     flex: 2; // This makes the first column take up 2/3 of the space
@@ -66,6 +137,7 @@
   .dateTimeSection {
     flex-direction: column;
     gap: layout.$spacing-04;
+    background-color: #ffffff !important;
   }
 }
 :global(.omrs-breakpoint-lt-desktop) .formGroup {
@@ -81,16 +153,87 @@
   }
 
 .heading {
-  color: colors.$gray-70;
+  // color: colors.$gray-70;
   @include type.type-style('heading-compact-02');
   margin-bottom: layout.$spacing-03;
+  margin-left: layout.$spacing-05;
 }
 
 .lastField {
-  margin-bottom: 76px !important; /* Adjust as necessary */
+  margin-bottom: 76px; /* Adjust as necessary */
+}
+// styles.module.scss
+.containerForm {
+  overflow: auto; // scrolls vertically and horizontally if needed
+  height: 80vh;
+}
+.helperText{
+  color: red;
+  font-weight:bold;
+}
+.required {
+  color:red
 }
 
-.required {
-  color: red;
-  margin-left: 4px;
+
+.formNew {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; // or 100% if in a constrained container
+  background-color: white;
 }
+
+.scrollableContent {
+  flex: 1;
+  overflow-y: auto; 
+  min-height: 0;
+}
+
+.stickyButtonSet {
+  position: sticky;
+  bottom: 0;
+  background-color: colors.$white-0;
+  padding: layout.$spacing-05;
+  display: flex; 
+  gap: layout.$spacing-03;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+}
+
+.customSelect {
+  // target dropdown menu
+  :global(.cds--list-box__menu) {
+    background-color: white !important;
+  }
+
+  // each item
+  :global(.cds--list-box__menu-item) {
+    background-color: white !important;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  // selected item (add a visual indicator)
+  :global(.cds--list-box__menu-item[aria-selected='true']) {
+    font-weight: 600;
+    border-left: 3px solid #0f62fe;
+  }
+}
+
+.lastField {
+  margin-bottom: 76px !important;
+}
+.notification {
+  margin-bottom: 20px !important;
+}
+
+.warningMessage {
+    background-color: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+    padding: 8px 16px;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+  }

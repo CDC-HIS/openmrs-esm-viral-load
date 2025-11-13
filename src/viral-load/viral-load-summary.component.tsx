@@ -24,6 +24,7 @@ import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { TableExpandRow, TableExpandedRow } from '@carbon/react';
 import debounce from 'lodash.debounce';
 import { fetchPatientData, fetchVlTestRequestResult } from '../api/api';
+import { config } from 'dotenv';
 
 interface HivCareAndTreatmentProps {
   patientUuid: string;
@@ -143,111 +144,118 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   if (isLoadingTestData) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
   if (isError) return <ErrorState error={isError} headerTitle={headerTitle} />;
 
-  if (vlRequestOrders?.length) {
-    return (
-      <div className={styles.widgetCard}>
-        <CardHeader title={headerTitle}>{isValidating && <InlineLoading />}</CardHeader>
-        {currentRows.length > 0 ? (
-          <>
-            <DataTable
-              filterRows={handleFilter}
-              rows={currentRows}
-              headers={tableHeaders}
-              useZebraStyles
-              size={isTablet ? 'lg' : 'sm'}
-            >
-              {({ rows, headers, getHeaderProps, getRowProps, getTableProps, getExpandedRowProps }) => (
-                <TableContainer>
-                  <Table aria-label="Viral Load" {...getTableProps()}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell className={styles.header} />
-                        {headers.map((header) => (
-                          <TableHeader
-                            {...getHeaderProps({
-                              header,
-                              isSortable: header.isSortable,
-                            })}
-                          >
-                            {header.header?.content ?? header.header}
-                          </TableHeader>
-                        ))}
-                        <TableHeader />
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {rows.map((row) => {
-                        const tableRowData = tableRows?.find((vlRequestOrders) => vlRequestOrders.id === row.id) || {};
-                        const { testResultDate, testResult, testedBy, resultStatus } = tableRowData as {
-                          testResultDate?: string;
-                          testResult?: string;
-                          testedBy?: string;
-                          resultStatus?: string;
-                        };
+  return (
+    <div className={styles.widgetCard}>
+      <CardHeader title={headerTitle}>
+        {isValidating && <InlineLoading />}
+        <Button
+          kind="ghost"
+          renderIcon={(props) => <Add size={16} {...props} />}
+          iconDescription="Add"
+          onClick={launchViralLoadForm}
+        >
+          {t('add', 'Add')}
+        </Button>
+      </CardHeader>
+      {currentRows.length > 0 ? (
+        <>
+          <DataTable
+            filterRows={handleFilter}
+            rows={currentRows}
+            headers={tableHeaders}
+            useZebraStyles
+            size={isTablet ? 'lg' : 'sm'}
+          >
+            {({ rows, headers, getHeaderProps, getRowProps, getTableProps, getExpandedRowProps }) => (
+              <TableContainer>
+                <Table aria-label="Viral Load" {...getTableProps()}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell className={styles.header} />
+                      {headers.map((header) => (
+                        <TableHeader
+                          {...getHeaderProps({
+                            header,
+                            isSortable: header.isSortable,
+                          })}
+                        >
+                          {header.header?.content ?? header.header}
+                        </TableHeader>
+                      ))}
+                      <TableHeader />
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.map((row) => {
+                      const tableRowData = tableRows?.find((vlRequestOrders) => vlRequestOrders.id === row.id) || {};
+                      const { testResultDate, testResult, testedBy, resultStatus } = tableRowData as {
+                        testResultDate?: string;
+                        testResult?: string;
+                        testedBy?: string;
+                        resultStatus?: string;
+                      };
 
-                        return (
-                          <React.Fragment key={row.id}>
-                            <TableExpandRow className={styles.row} {...getRowProps({ row })}>
-                              {row.cells.map((cell) => (
-                                <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
-                              ))}
-                              <TableCell className="cds--table-column-menu">
-                                <EncounterActionMenu
-                                  patientUuid={patientUuid}
-                                  encounter={vlRequestOrders?.find((rowData) => rowData.uuid === row.id)}
-                                />
-                              </TableCell>
-                            </TableExpandRow>
+                      return (
+                        <React.Fragment key={row.id}>
+                          <TableExpandRow className={styles.row} {...getRowProps({ row })}>
+                            {row.cells.map((cell) => (
+                              <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
+                            ))}
+                            <TableCell className="cds--table-column-menu">
+                              <EncounterActionMenu
+                                patientUuid={patientUuid}
+                                encounter={vlRequestOrders?.find((rowData) => rowData.uuid === row.id)}
+                              />
+                            </TableCell>
+                          </TableExpandRow>
 
-                            {row.isExpanded && (
-                              <TableExpandedRow colSpan={headers.length + 2} {...getExpandedRowProps({ row })}>
-                                <div className={styles.expandedRowContent}>
-                                  <TableContainer>
-                                    <Table size="sm">
-                                      <TableHead>
-                                        <TableRow>
-                                          <TableHeader>Test Date</TableHeader>
-                                          <TableHeader>Test Result</TableHeader>
-                                          <TableHeader>Tested By</TableHeader>
-                                          <TableHeader>Result Status</TableHeader>
-                                        </TableRow>
-                                      </TableHead>
-                                      <TableBody>
-                                        <TableRow>
-                                          <TableCell>{testResultDate ?? '--'}</TableCell>
-                                          <TableCell>{testResult}</TableCell>
-                                          <TableCell>{testedBy}</TableCell>
-                                          <TableCell>{resultStatus}</TableCell>
-                                        </TableRow>
-                                      </TableBody>
-                                    </Table>
-                                  </TableContainer>
-                                </div>
-                              </TableExpandedRow>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}{' '}
-                    </TableBody>{' '}
-                  </Table>
-                </TableContainer>
-              )}
-            </DataTable>
-            <Pagination
-              page={currentPage}
-              pageSize={rowsPerPage}
-              totalItems={totalRows}
-              onChange={({ page }) => setCurrentPage(page)}
-              pageSizes={[10, 20, 30, 50]}
-            />
-          </>
-        ) : (
-          <div></div>
-        )}
-      </div>
-    );
-  }
-  return <div></div>;
+                          {row.isExpanded && (
+                            <TableExpandedRow colSpan={headers.length + 2} {...getExpandedRowProps({ row })}>
+                              <div className={styles.expandedRowContent}>
+                                <TableContainer>
+                                  <Table size="sm">
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableHeader>Test Date</TableHeader>
+                                        <TableHeader>Test Result</TableHeader>
+                                        <TableHeader>Tested By</TableHeader>
+                                        <TableHeader>Result Status</TableHeader>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      <TableRow>
+                                        <TableCell>{testResultDate ?? '--'}</TableCell>
+                                        <TableCell>{testResult}</TableCell>
+                                        <TableCell>{testedBy}</TableCell>
+                                        <TableCell>{resultStatus}</TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+                                </TableContainer>
+                              </div>
+                            </TableExpandedRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}{' '}
+                  </TableBody>{' '}
+                </Table>
+              </TableContainer>
+            )}
+          </DataTable>
+          <Pagination
+            page={currentPage}
+            pageSize={rowsPerPage}
+            totalItems={totalRows}
+            onChange={({ page }) => setCurrentPage(page)}
+            pageSizes={[10, 20, 30, 50]}
+          />
+        </>
+      ) : (
+        <EmptyState displayText={t('noData', 'Data')} headerTitle={''} />
+      )}
+    </div>
+  );
 };
 
 export default ViralLoadSummary;

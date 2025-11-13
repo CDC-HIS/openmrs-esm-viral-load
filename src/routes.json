@@ -73,7 +73,8 @@
       "component": "ettorsWorkspace",
       "type": "form",
       "canMaximize": true,
-      "canHide": false
+      "canHide": false,
+      "width": "wider"
     },
     {
       "name": "viral-load-result-workspace",
