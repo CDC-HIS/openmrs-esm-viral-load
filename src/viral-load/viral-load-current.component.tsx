@@ -106,27 +106,27 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
   const tableRows = patientData
     ? patientData.map((patient, index) => ({
-        id: patient.patientUUID || index,
-        regimen: patient.regimen || null,
-        currentRegimenInitiatedDate: patient.currentRegimenInitiatedDate
-          ? formatDate(parseDate(patient.currentRegimenInitiatedDate), { mode: 'wide' })
-          : null,
-        followUpStatus: patient.followUpStatus,
-        pregnant: patient.pregnancyStatus !== null ? patient.pregnancyStatus : null,
-        breastFeeding: patient.breastFeeding !== null ? patient.breastFeeding : null,
-        cd4:
-          patient.cd4AboveFiveAgeCount != null
-            ? patient.cd4AboveFiveAgeCount
-            : patient.cd4ForChild != null
+      id: patient.patientUUID || index,
+      regimen: patient.regimen || null,
+      currentRegimenInitiatedDate: patient.currentRegimenInitiatedDate
+        ? formatDate(parseDate(patient.currentRegimenInitiatedDate), { mode: 'wide' })
+        : null,
+      followUpStatus: patient.followUpStatus,
+      pregnant: patient.pregnancyStatus !== null ? patient.pregnancyStatus : null,
+      breastFeeding: patient.breastFeeding !== null ? patient.breastFeeding : null,
+      cd4:
+        patient.cd4AboveFiveAgeCount != null
+          ? patient.cd4AboveFiveAgeCount
+          : patient.cd4ForChild != null
             ? patient.cd4ForChild
             : null,
-        // reasonForVlTest:
-        //   patient.routingVlTest != null
-        //     ? patient.routingVlTest
-        //     : patient.targetedVlTest != null
-        //     ? patient.targetedVlTest
-        //     : null,
-      }))
+      // reasonForVlTest:
+      //   patient.routingVlTest != null
+      //     ? patient.routingVlTest
+      //     : patient.targetedVlTest != null
+      //     ? patient.targetedVlTest
+      //     : null,
+    }))
     : [];
 
   // patientData?.length ? patientData.map((data, index) => ({

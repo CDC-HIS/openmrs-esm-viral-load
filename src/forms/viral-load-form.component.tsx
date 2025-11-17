@@ -16,39 +16,20 @@ import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
 import {
-  fetchLocation,
   fetchVlTestRequestResult,
-  getPatientEncounters,
-  getPatientInfo,
   saveEncounter,
   saveVlTestRequestResult,
 } from '../api/api';
-import {
-  FOLLOWUP_ENCOUNTER_TYPE_UUID,
-  VIRALLOAD_ENCOUNTER_TYPE_UUID,
-  VIRALLOAD_FORM_UUID,
-  viralLoadFieldConcepts,
-} from '../constants';
 import dayjs from 'dayjs';
 import { useVLRequestOrders } from '../viral-load/viral-load.resource';
-import type { OpenmrsEncounter } from '../types';
-import { getObsFromEncounter } from '../utils/encounter-utils';
 import { ButtonSet } from '@carbon/react';
 import { NumberInput } from '@carbon/react';
 import { RadioButtonGroup } from '@carbon/react';
 import { RadioButton } from '@carbon/react';
 import { Dropdown } from '@carbon/react';
-import { Checkbox } from '@carbon/react';
-import { FormGroup } from '@carbon/react';
-import { errors } from '@playwright/test';
 import { InlineLoading } from '@carbon/react';
 import { Accordion } from '@carbon/react';
 import { AccordionItem } from '@carbon/react';
-
-interface ResponsiveWrapperProps {
-  children: React.ReactNode;
-  isTablet: boolean;
-}
 
 interface RequiredFieldLabelProps {
   label: string;
@@ -91,26 +72,11 @@ interface ViralLoadFormProps {
 
 const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter }) => {
   const { t } = useTranslation();
-  const [dateOfSampleCollection, setdateOfSampleCollection] = useState<string | null>(null);
-  const [dateOfSpecimenSent, setdateOfSpecimenSent] = useState<string | null>(null);
   const [reqDate, setrequestedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const today = new Date();
-  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
-
   const { control, handleSubmit, setValue, watch } = useForm<FormInputs>();
   const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
-  const [facilityLocationName, setFacilityLocationName] = useState('');
-  const [selectedField, setSelectedField] = useState<keyof FormInputs | null>(null);
-
-  // const specimenTypeMapDB = {
-  //   DBS: 'DBS',
-  //   'Whole blood': 'Whole blood',
-  //   Plasma: 'Plasma',
-  //   'DPS (Dried Plasma Spot)': 'DPS (Dried Plasma Spot)',
-  // };
-
-  // For displaying radio buttons (UI)
 
   const selectedReason = watch('reasonForVlTest');
 
@@ -133,37 +99,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     'DPS (Dried Plasma Spot)': 'DPS',
   };
 
-  const routineVlOptions = [
-    'First viral load test at 3 months or longer post ART',
-    'Second viral load test at 12 months post ART',
-    'Annual viral load Test',
-    'Viral load after EAC: repeat viral load where initial viral load greater than 50 and less than 1000 copies per ml',
-    'Viral load after EAC: confirmatory viral load where initial viral load greater than 1000 copies per ml',
-  ];
-
-  const targetedVlOptions = ['Suspected Antiretroviral failure'];
-
-  //   const routineVlMapping: Record<string, string> = {
-  //   'First viral load test at 3 months or longer post ART': 'First viral load test at 3 months or longer post ART',
-  //   'Second VL at 12 months post ART': '2nd VL at 12 months post ART',
-  //   // Add more mappings here as needed
-  // };
-
-  const encounterDatetime = new Date().toISOString();
-
-  const encounterProviders = [
-    { provider: 'caa66686-bde7-4341-a330-91b7ad0ade07', encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66' },
-  ];
-  const encounterType = VIRALLOAD_ENCOUNTER_TYPE_UUID;
-  const form = { uuid: VIRALLOAD_FORM_UUID };
-  const location = facilityLocationUUID;
-  const patient = patientUuid;
-  const orders = [];
-  const isTablet = useLayoutType() === 'tablet';
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showChildDatePicker, setShowChildDatePicker] = useState(false);
-  const [isOtherSelected, setIsOtherSelected] = useState(false);
-  const [isMale, setIsMale] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     specimenType = '',
@@ -197,29 +132,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     });
   }, [patientUuid]);
 
-  //const [routineVlOptions, setRoutineVlOptions] = useState<string[]>([]);
-
-  // useEffect(() => {
-  //   const loadRoutineVlOptions = async () => {
-  //     try {
-  //       const resultData = await fetchVlTestRequestResult(patientUuid);
-  //       const uniqueOptions = Array.from(
-  //         new Set(
-  //           resultData
-  //             .map((item: any) => item.routineVl)
-  //             .filter((val): val is string => !!val) // remove null/undefined
-  //         )
-  //       );
-  //       setRoutineVlOptions(uniqueOptions  as string[]);
-  //     } catch (error) {
-  //       console.error('Error loading routine VL options:', error);
-  //     }
-  //   };
-
-  //   loadRoutineVlOptions();
-  // }, [patientUuid]);
-
-  // Load existing encounter data if editing
   useEffect(() => {
     const routineVlMapping: Record<string, string> = {
       'First viral load test at 3 months or longer post ART': 'First viral load test at 3 months or longer post ART',
@@ -261,16 +173,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
     setValue('routineVLtest', routineVlValueFromDB);
 
-    // const reasonValueFromDB = reason;
-    // console.log(reason);
-    // // Convert "DPS" → "DPS (Dried Plasma Spot)" for radio button
-    // const initialReason = reasonValueFromDB;
-
-    // setValue('reasonForVlTest', initialReason);
-
-    // setValue('specimenType', specimenType);
-
-    //setValue('specimenType', specimenTypeMapDB[specimenType]);
 
     if (specimenSentToReferralDate && dayjs(specimenSentToReferralDate).isValid()) {
       setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDate).format('YYYY-MM-DD'));
@@ -313,7 +215,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
       ignoreChanges: false,
-      onWorkspaceClose: () => {},
+      onWorkspaceClose: () => { },
     };
     closeWorkspace(name, options);
   };
@@ -397,6 +299,11 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     return await saveEncounter(new AbortController(), payload, uuid); // Use saveEncounter for updating
   };
 
+
+  const sampleDate = watch('dateOfSampleCollectionDate');
+  const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
+  const requestDate = watch('reqDate');
+
   return (
     <Form onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-form" className={styles.formNew}>
       <div>
@@ -404,36 +311,47 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
           <Accordion>
             <AccordionItem title="REQUESTER INFORMATION" open className={styles.formContainer}>
               <div className={styles.fieldWrapper}>
-                <section>
-                  <ResponsiveWrapper>
-                    <Controller
-                      name="reqDate"
-                      control={control}
-                      render={({ field: { onChange, value, ref }, fieldState }) => (
-                        <>
-                          <OpenmrsDatePicker
-                            id="reqDate"
-                            //labelText={t('requestedDate', 'Requested Date:')}
-                            labelText={
-                              <>
-                                {t('reqDate', 'Date VL Requested:')}
-                                <span className={styles.required}>*</span>
-                              </>
-                            }
-                            value={value}
-                            maxDate={today}
-                            onChange={(date) => onDateChange(date, 'reqDate')}
-                            ref={ref}
-                            invalidText={error}
-                            //isDisabled={true}
-                            isRequired={true}
-                          />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                        </>
-                      )}
-                    />
-                  </ResponsiveWrapper>
-                </section>
+                <Controller
+                  name="reqDate"
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                    let error = null;
+                    if (!value) {
+                      error = 'Date VL Requested is required';
+                    }
+
+                    return error || true;
+                  },
+                }}
+                  render={({ field: { onChange, value, ref, onBlur }, fieldState }) => (
+                      <OpenmrsDatePicker
+                        id="reqDate"
+                        //labelText={t('requestedDate', 'Requested Date:')}
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('reqDate', 'Date VL Requested:')}
+                              <span className={styles.required}>*</span>
+                            </span>
+                          </>
+                        }
+                        value={value}
+                        maxDate={sampleDate || sentDate || today}
+                        //onChange={(date) => onDateChange(date, 'reqDate')}
+                        onChange={(date) => {
+                         onDateChange(date, 'reqDate');
+                          onBlur();
+                        }}
+                        ref={ref}
+                        invalid={!!fieldState.error}
+                        invalidText={fieldState.error?.message}
+                        //isDisabled={true}
+                        //isRequired={true}
+                      />
+                     
+                  )}
+                />
                 <section className={styles.formGroup}>
                   <ResponsiveWrapper>
                     <Controller
@@ -443,7 +361,14 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                         <TextInput
                           id="providerName"
                           value={value}
-                          labelText="Name of Requester:"
+                          labelText={
+                            <>
+                              <span className={styles.label}>
+                                {t('providerName', 'Name of Requester:')}
+                              </span>
+                            </>
+                          }
+                          //labelText="Name of Requester:"
                           placeholder="Requested by"
                           onChange={onChange}
                           onBlur={onBlur}
@@ -458,13 +383,52 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     <Controller
                       name="providerTelephoneNumber"
                       control={control}
-                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                      rules={{
+                        validate: value => {
+                          //if (!value) return "Phone number is required";
+
+                          // Starts with +
+                          if (value.startsWith("+")) {
+                            if (!/^\+\d+$/.test(value)) {
+                              return "Only numbers allowed after +";
+                            }
+                            if (value.length !== 13) {
+                              return "Phone number with + must be exactly 13 characters";
+                            }
+                            return true;
+                          }
+
+                          // No +
+                          if (!/^\d+$/.test(value) && value !== '') {
+                            return "Only numbers allowed";
+                          }
+                          if (value.length > 10) {
+                            return "Phone number must be less than 10 digits";
+                          }
+
+                          return true;
+                        }
+                      }}
+                      render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
                         <TextInput
                           id="providerTelephoneNumber"
-                          value={value}
-                          labelText="Mobile Phone Number:"
+                          value={value ?? ""}
+                          labelText={
+                            <span className={styles.label}>
+                              {t('providerTelephoneNumber', 'Mobile Phone Number:')}
+                            </span>
+                          }
                           placeholder="Phone Number"
-                          onChange={onChange}
+                          invalid={!!fieldState.error}
+                          invalidText={fieldState.error?.message}
+                          onChange={(e) => {
+                            let val = e.target.value;
+
+                            // Allow only digits or a leading +
+                            if (/^\+?\d*$/.test(val)) {
+                              onChange(val);
+                            }
+                          }}
                           onBlur={onBlur}
                           ref={ref}
                         />
@@ -472,6 +436,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     />
                   </ResponsiveWrapper>
                 </section>
+
               </div>
             </AccordionItem>
             <AccordionItem title="REASON FOR TEST" open className={styles.formContainer}>
@@ -485,8 +450,10 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     orientation="vertical"
                     legendText={
                       <>
-                        {t('reasonForVlTest', 'Reason for VL test')}
-                        <span className={styles.required}>*</span>
+                        <span className={styles.label}>
+                          {t('reasonForVlTest', 'Reason for VL test')}
+                          <span className={styles.required}>*</span>
+                        </span>
                       </>
                     }
                     {...field}
@@ -511,7 +478,14 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                           <Dropdown
                             id="routineVLtest"
                             label={t('pleaseSelect', 'Please select')}
-                            titleText={t('routineVLtest', 'Routine VL test')}
+                            titleText={
+                              <>
+                                <span className={styles.label}>
+                                  {t('routineVLtest', 'Routine VL test')}
+                                </span>
+                              </>
+                            }
+                            //titleText={t('routineVLtest', 'Routine VL test')}
                             items={[
                               'First viral load test at 3 months or longer post ART',
                               'Second viral load test at 12 months post ART',
@@ -544,7 +518,14 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                           <Dropdown
                             id="targetedVLtest"
                             label={t('pleaseSelect', 'Please select')}
-                            titleText={t('targetedVLtest', 'Targeted VL test')}
+                            titleText={
+                              <>
+                                <span className={styles.label}>
+                                  {t('targetedVLtest', 'Targeted VL test')}
+                                </span>
+                              </>
+                            }
+                            //titleText={t('targetedVLtest', 'Targeted VL test')}
                             items={['Suspected Antiretroviral failure']} // Specify the dropdown options
                             itemToString={(item) => item || ''} // Convert item to string for display
                             onChange={(event) => onChange(event.selectedItem)} // Handle selection
@@ -555,99 +536,113 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                         </div>
                       )}
                     />
-                    {/* <Controller
-    name="targetedVLtest"
-    control={control}
-    render={({ field }) => (
-      <Select
-        className={styles.customSelect}
-        id="targetedVLtest"
-        labelText={<span className={styles.label}>{t('targetedVLtest', 'Targeted VL test')}</span>}
-        {...field}
-      >
-        <SelectItem value="" text="Select" />
-        {targetedVlOptions.map(option => (
-          <SelectItem key={option} value={option} text={option} />
-        ))}
-      </Select>
-    )}
-  /> */}
                   </ResponsiveWrapper>
                 </section>
               )}
             </AccordionItem>
             <AccordionItem title="TO BE FILLED BY REFERRING LABORATORY" open className={styles.formContainer}>
+              <Controller
+                name="dateOfSampleCollectionDate"
+                control={control}
+                rules={{
+                  //required: t('requiredField', 'Date specimen collected is required'), // Ensure the field is required
+                  validate: (value) => {
+                    let error = null;
+                    if (!value) {
+                      error = 'Date specimen collected is required';
+                    }
+
+                    return error || true;
+                  },
+                }}
+                render={({ field: { onChange, value, ref, onBlur }, fieldState }) => {
+                  return (
+                    <>
+                      <OpenmrsDatePicker
+                        id="dateOfSampleCollectionDate"
+                        //labelText={t('dateOfSampleCollection', 'Date specimen collected')}
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('dateOfSampleCollection', 'Date Specimen Collected:')}
+                              <span className={styles.required}>*</span>
+                            </span>
+                          </>
+                        }
+                        value={value}
+                        minDate={requestDate}
+                        maxDate={sentDate || today} // Max date is the sent date or today if not set
+                        //onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
+                        onChange={(date) => {
+                          onDateChange(date, 'dateOfSampleCollectionDate');
+                          onBlur();
+                        }}
+                        ref={ref}
+                        invalid={!!fieldState.error}
+                        invalidText={fieldState.error?.message}
+                      />
+
+                    </>
+                  );
+                }}
+              />
               <section className={styles.formGroup}>
                 <ResponsiveWrapper>
+
                   <Controller
-                    name="dateOfSampleCollectionDate"
+                    name="specimenType"
                     control={control}
                     rules={{
-                      required: t('requiredField', 'Date specimen collected is required'), // Ensure the field is required
+                      validate: value =>
+                        value ? true : 'Specimen type is required',
                     }}
-                    render={({ field: { onChange, value, ref }, fieldState }) => {
-                      const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
-                      const requestDate = watch('reqDate');
-                      return (
-                        <>
-                          <OpenmrsDatePicker
-                            id="dateOfSampleCollectionDate"
-                            //labelText={t('dateOfSampleCollection', 'Date specimen collected')}
-                            labelText={
-                              <>
-                                {t('dateOfSampleCollection', 'Date Specimen Collected:')}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <RadioButtonGroup
+                          orientation="vertical"
+                          legendText={
+                            <>
+                              <span className={styles.label}>
+                                {t('specimenType', 'Specimen Type')}
                                 <span className={styles.required}>*</span>
-                              </>
-                            }
-                            value={value}
-                            minDate={requestDate}
-                            maxDate={sentDate || today} // Max date is the sent date or today if not set
-                            onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
-                            ref={ref}
-                            invalid={!!fieldState.error}
-                          />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                        </>
-                      );
-                    }}
+                              </span>
+                            </>
+                          }
+                          {...field}
+                          valueSelected={field.value}
+                          invalid={!!fieldState.error}
+                          invalidText={fieldState.error?.message}
+                          onChange={(value) => field.onChange(value)}
+                        >
+
+                          {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
+                            <RadioButton key={key} id={key} labelText={label} value={key} />
+                          ))}
+                        </RadioButtonGroup>
+                      </>
+                    )}
                   />
                 </ResponsiveWrapper>
               </section>
-              <Controller
-                name="specimenType"
-                control={control}
-                rules={{ required: t('required', 'Specimen type is required') }}
-                defaultValue=""
-                render={({ field }) => (
-                  <RadioButtonGroup
-                    orientation="vertical"
-                    legendText={
-                      <>
-                        {t('specimenType', 'Specimen Type')}
-                        <span className={styles.required}>*</span>
-                      </>
-                    }
-                    {...field}
-                    valueSelected={field.value}
-                    onChange={(value) => field.onChange(value)}
-                  >
-                    {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
-                      <RadioButton key={key} id={key} labelText={label} value={key} />
-                    ))}
-                  </RadioButtonGroup>
-                )}
-              />
               <section className={styles.lastField}>
                 <ResponsiveWrapper>
                   <Controller
                     name="dateOfSpecimenSent"
                     control={control}
                     rules={{
-                      required: t('requiredField', 'This field is required'),
+                      //required: t('requiredField', 'This field is required'),
+                      validate: (value) => {
+                        let error = null;
+                        if (!value) {
+                          error = 'Date specimen sent is required';
+                        }
+
+                        return error || true;
+                      },
                     }}
-                    render={({ field: { onChange, value, ref }, fieldState }) => {
-                      const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
-                      const requestDate = watch('reqDate');
+                    render={({ field: { onChange, value, ref, onBlur }, fieldState }) => {
+                      //const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
+                      //const requestDate = watch('reqDate');
                       return (
                         <>
                           <OpenmrsDatePicker
@@ -655,18 +650,24 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                             //labelText={t('dateOfSpecimenSent', 'Date specimen sent to referral lab.')}
                             labelText={
                               <>
-                                {t('dateOfSpecimenSent', 'Date Specimen sent to Testing Laboratory:')}
-                                <span className={styles.required}>*</span>
+                                <span className={styles.label}>
+                                  {t('dateOfSpecimenSent', 'Date Specimen sent to Testing Laboratory:')}
+                                </span>
                               </>
                             }
                             value={value}
                             minDate={sampleDate || requestDate} // Min date is the sample collection date or null if not set
                             maxDate={today}
-                            onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
+                            //onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
+                            onChange={(date) => {
+                              onDateChange(date, 'dateOfSpecimenSent');
+                              onBlur();
+                            }}
                             ref={ref}
                             invalid={!!fieldState.error}
+                            invalidText={fieldState.error?.message}
                           />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                          {/* {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>} */}
                         </>
                       );
                     }}
@@ -674,69 +675,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                 </ResponsiveWrapper>
               </section>
             </AccordionItem>
-
-            {/* <section>
-        <ResponsiveWrapper>
-          <Controller
-            name="specimenType"
-            control={control}
-            rules={{
-              required: t('specimenType', 'This field is required'),                  
-            }}
-            render={({ field: { onChange, value, onBlur }, fieldState }) => (
-              <>
-              <RadioButtonGroup
-                //legendText="Specimen Type"
-                legendText={
-                  <>
-                    {t('specimenType', 'Specimen Type')} 
-                    <span className={styles.required}>*</span>
-                  </>
-                }
-                name="specimenType"
-                onChange={(newValue) => {
-                  onChange(newValue);
-                  setSelectedField('specimenType'); // Set the selected field for clear action
-                }}
-                orientation="vertical"
-                value={value}
-                onBlur={onBlur}
-                invalid={!!fieldState.error} // Highlight error state
-                error={fieldState.error?.message} // Display error message
-              >
-                <RadioButton
-                  id="specimenTypeDBS"
-                  labelText="DBS"
-                  value={'f3e5d62c-d420-4015-b77c-677c3d50ecfa'}
-                  onFocus={() => setSelectedField('specimenType')}
-                />
-                <RadioButton
-                  id="specimenTypeEDTAWholeBlood"
-                  labelText="Whole blood"
-                  value={'161939AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}
-                  onFocus={() => setSelectedField('specimenType')}
-                />
-                <RadioButton
-                  id="specimenTypePlasma"
-                  labelText="Plasma"
-                  value={'1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}
-                  onFocus={() => setSelectedField('specimenType')}
-                />
-                <RadioButton
-                  id="specimenDPS"
-                  labelText="DPS (Dried Plasma Spot)"
-                  value={'46f5752c-b204-4926-b60d-df263633c93e'}
-                  onFocus={() => setSelectedField('specimenType')}
-                />
-              </RadioButtonGroup>
-              {fieldState.error && (
-                <div className={styles.errorMessage}>{fieldState.error.message}</div>
-              )}
-              </>
-            )}
-          />
-        </ResponsiveWrapper>
-        </section> */}
 
             <ButtonSet className={styles.buttonSet}>
               <Button
@@ -765,19 +703,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               </Button>
             </ButtonSet>
 
-            {/* <ButtonSet className={isTablet ? styles.tablet : styles.desktop}>
-            <Button
-              className={styles.button}
-              onClick={() => closeWorkspaceHandler('ettors-workspace')}
-              kind="secondary"
-            >
-              {t('discard', 'Discard')}
-            </Button>
-            <Button className={styles.button} type="submit">
-              {/* {t('saveAndClose', 'Save and close')} */}
-            {/* {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
-            </Button>
-          </ButtonSet>           */}
           </Accordion>
         </Stack>
       </div>

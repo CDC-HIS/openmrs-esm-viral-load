@@ -82,7 +82,8 @@
       "component": "vlResultWorkspace",
       "type": "form",
       "canMaximize": true,
-      "canHide": false
+      "canHide": false,
+      "width": "wider"
     }
   ]
 }

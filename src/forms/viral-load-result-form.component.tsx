@@ -14,9 +14,8 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
-import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter, saveVlTestResult } from '../api/api';
+import { saveEncounter, saveVlTestResult } from '../api/api';
 import {
-  FOLLOWUP_ENCOUNTER_TYPE_UUID,
   VIRALLOAD_ENCOUNTER_TYPE_UUID,
   VIRALLOAD_RESULT_FORM_UUID,
   viralLoadFieldConcepts,
@@ -24,11 +23,8 @@ import {
 import dayjs from 'dayjs';
 import { useVLRequestOrders } from '../viral-load/viral-load.resource';
 import type { OpenmrsEncounter } from '../types';
-import { getObsFromEncounter } from '../utils/encounter-utils';
 import { ButtonSet } from '@carbon/react';
 import { NumberInput } from '@carbon/react';
-import { RadioButtonGroup } from '@carbon/react';
-import { RadioButton } from '@carbon/react';
 import { Dropdown } from '@carbon/react';
 import { Checkbox } from '@carbon/react';
 import { InlineLoading } from '@carbon/react';
@@ -115,7 +111,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     labName,
     specimenReceivedDate,
     specimenQuality,
-    reasonQuality,
+    reason,
     instrumentUsed,
     temperatureOnArrival,
     resultReachedToFacDate,
@@ -133,43 +129,6 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
 
   // Fetch patient encounters
   const { vlRequestOrders, isError, mutate } = useVLRequestOrders(patientUuid);
-
-  // useEffect(() => {
-  //   (async function () {
-  //     const facilityInformation = await fetchLocation();
-  //     facilityInformation.data.results.forEach((element) => {
-  //       if (element.tags.some((x) => x.display === 'Facility Location')) {
-  //         setFacilityLocationUUID(element.uuid);
-  //         setFacilityLocationName(element.display);
-  //       }
-  //     });
-  //   })();
-  // }, []);
-
-  // Load existing encounter data if editing
-  // useEffect(() => {
-  //   if (encounter) {
-
-  //     const requestedDateObs = getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate);
-  //     if (requestedDateObs && dayjs(requestedDateObs).isValid()) {
-  //       setValue('requestedDate', dayjs(requestedDateObs).format('YYYY-MM-DD'));
-  //       setrequestedDate(
-  //         dayjs(getObsFromEncounter(encounter, viralLoadFieldConcepts.requestedDate)).format('YYYY-MM-DD'),
-  //       );
-  //     } else {
-  //       setValue('requestedDate', ''); // or any default value like null or empty string
-  //     }
-
-  //     setValue(
-  //       'testedBy',
-  //       encounter?.obs?.find((e) => e?.concept?.uuid === viralLoadFieldConcepts.testedBy)?.value || '',
-  //     );
-  //     setValue(
-  //       'viralLoadCount',
-  //       encounter?.obs?.find((e) => e?.concept?.uuid === viralLoadFieldConcepts.viralLoadCount)?.value || '',
-  //     );
-  //   }
-  // }, [encounter, setValue]);
 
   useEffect(() => {
     if (encounter) {
@@ -223,7 +182,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
         setValue('specimenQuality', specimenQuality);
       }
 
-      setValue('reason', reasonQuality);
+      setValue('reason', reason);
       if (instrumentUsed) {
         setValue('instrumentUsed', instrumentUsed);
       }
@@ -246,7 +205,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     dispatchedDate,
     labId,
     labName,
-    reasonQuality,
+    reason,
     testResultDate,
     resultReachedToFacDate,
     resultReceivedByFacility,
@@ -290,7 +249,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
       ignoreChanges: false,
-      onWorkspaceClose: () => {},
+      onWorkspaceClose: () => { },
     };
     closeWorkspace(name, options);
   };
@@ -303,31 +262,31 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const resultFormInputs = useWatch({ control });
 
   const handleFormSubmit = async (fieldValues: ResultFormInputs) => {
-    const obs = [];
+    // const obs = [];
 
-    // Prepare observations from field values
-    Object.keys(fieldValues).forEach((key) => {
-      if (fieldValues[key]) {
-        obs.push({
-          concept: viralLoadFieldConcepts[key],
-          formFieldNamespace: 'rfe-forms',
-          formFieldPath: `rfe-forms-${key}`,
-          value: formatValue(fieldValues[key]),
-        });
-      }
-    });
+    // // Prepare observations from field values
+    // Object.keys(fieldValues).forEach((key) => {
+    //   if (fieldValues[key]) {
+    //     obs.push({
+    //       concept: viralLoadFieldConcepts[key],
+    //       formFieldNamespace: 'rfe-forms',
+    //       formFieldPath: `rfe-forms-${key}`,
+    //       value: formatValue(fieldValues[key]),
+    //     });
+    //   }
+    // });
 
-    // Construct the base payload
-    const payload = {
-      encounterDatetime,
-      encounterProviders,
-      encounterType,
-      form,
-      location,
-      patient,
-      orders,
-      obs: obs,
-    };
+    // // Construct the base payload
+    // const payload = {
+    //   encounterDatetime,
+    //   encounterProviders,
+    //   encounterType,
+    //   form,
+    //   location,
+    //   patient,
+    //   orders,
+    //   obs: obs,
+    // };
 
     const abortController = new AbortController();
 
@@ -359,40 +318,13 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     setIsSubmitting(true);
 
     try {
-      await saveVlTestResult(new AbortController(), apiPayload, uuid);
+      await saveVlTestResult(abortController, apiPayload, uuid);
       showSnackbar({
         isLowContrast: true,
         title: t('saveEntry', 'Record Saved'),
         kind: 'success',
         subtitle: t('viralLoadTestResultSavedSuccessfully', 'The viral load test result has been saved.'),
       });
-      //     saveVlTestResult(abortController, vlResultPayload, id)
-      // .then((response) => {
-      //   console.log('Saved VL Test Request Result:', response);
-      // })
-      // .catch((error) => {
-      //   console.error('Failed to save:', error);
-      // });
-      // Check if we are editing an existing encounter
-      // if (encounter?.uuid) {
-      //   // Update the existing encounter
-      //   await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
-      //   showSnackbar({
-      //     isLowContrast: true,
-      //     title: t('updatedEntry', 'Record Updated'),
-      //     kind: 'success',
-      //     subtitle: t('viralLoadEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
-      //   });
-      // } else {
-      //   // Create a new encounter if none exists
-      //   await createEncounter(payload);
-      //   showSnackbar({
-      //     isLowContrast: true,
-      //     title: t('saveEntry', 'Record Saved'),
-      //     kind: 'success',
-      //     subtitle: t('viralLoadEncounterCreatedSuccessfully', 'A new encounter was created'),
-      //   });
-      // }
 
       mutate();
       closeWorkspaceHandler('viral-load-result-workspace');
@@ -417,19 +349,16 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     return await saveEncounter(new AbortController(), payload, uuid); // Use saveEncounter for updating
   };
 
-  return (
-    // <Form cclassName={styles.formNew} onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-result-form">
-    //   <div>
-    //   <Stack gap={1} className={styles.container}>
+  const watchSpecimenQuality = watch('specimenQuality');
 
-    //     <div className={styles.fieldWrapper}>
-    //     <section>
+  return (
     <Form onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-result-form" className={styles.formNew}>
       <div>
         <Stack gap={1} className={styles.container}>
           <Accordion>
             <AccordionItem title="TESTING LABORATORY INFORMATION" open className={styles.formContainer}>
-              <section className={styles.formGroup}>
+
+              <div className={styles.fieldWrapper}>
                 <ResponsiveWrapper>
                   <Controller
                     name="labID"
@@ -438,7 +367,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="labID"
                         value={value}
-                        labelText="Lab ID:"
+                        //labelText="Lab ID:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('labID', 'Lab ID:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Lab ID"
                         onChange={onChange}
                         onBlur={onBlur}
@@ -447,7 +383,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     )}
                   />
                 </ResponsiveWrapper>
-              </section>
+              </div>
               <section className={styles.formGroup}>
                 <ResponsiveWrapper>
                   <Controller
@@ -457,7 +393,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="testingLabName"
                         value={value}
-                        labelText="Testing lab name:"
+                        //labelText="Testing lab name:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('testingLabName', 'Testing lab name:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Testing lab name"
                         onChange={onChange}
                         onBlur={onBlur}
@@ -469,32 +412,37 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
               </section>
             </AccordionItem>
             <AccordionItem title="SPECIMEN INFORMATION" open className={styles.formContainer}>
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="specimenReceivedDate"
-                    control={control}
-                    render={({ field: { onChange, value, ref }, fieldState }) => {
-                      const testDate = watch('testDate');
-                      return (
-                        <>
-                          <OpenmrsDatePicker
-                            id="specimenReceivedDate"
-                            labelText={t('specimenReceivedDate', 'Specimen received date')}
-                            value={value}
-                            minDate={testDate}
-                            maxDate={today}
-                            onChange={(date) => onDateChange(date, 'specimenReceivedDate')}
-                            ref={ref}
-                            invalid={!!fieldState.error}
-                          />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                        </>
-                      );
-                    }}
-                  />
-                </ResponsiveWrapper>
-              </section>
+              <ResponsiveWrapper>
+                <Controller
+                  name="specimenReceivedDate"
+                  control={control}
+                  render={({ field: { onChange, value, ref }, fieldState }) => {
+                    const testDate = watch('testDate');
+                    return (
+                      <>
+                        <OpenmrsDatePicker
+                          id="specimenReceivedDate"
+                          //labelText={t('specimenReceivedDate', 'Specimen received date')}
+                          labelText={
+                            <>
+                              <span className={styles.label}>
+                                {t('specimenReceivedDate', 'Specimen received date')}
+                              </span>
+                            </>
+                          }
+                          value={value}
+                          minDate={testDate}
+                          maxDate={today}
+                          onChange={(date) => onDateChange(date, 'specimenReceivedDate')}
+                          ref={ref}
+                          invalid={!!fieldState.error}
+                        />
+                        {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                      </>
+                    );
+                  }}
+                />
+              </ResponsiveWrapper>
               {/* <section className={styles.formGroup}>
           <ResponsiveWrapper>
           <Controller
@@ -530,7 +478,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                         <Dropdown
                           id="specimenQuality"
                           label={t('pleaseSelect', 'Please select')}
-                          titleText={t('specimenQuality', 'Specimen quality')}
+                          //titleText={t('specimenQuality', 'Specimen quality')}
+                          titleText={
+                            <>
+                              <span className={styles.label}>
+                                {t('specimenQuality', 'Specimen quality')}
+                              </span>
+                            </>
+                          }
                           items={['Acceptable', 'Unacceptable']} // Specify the dropdown options
                           itemToString={(item) => item || ''} // Convert item to string for display
                           onChange={(event) => onChange(event.selectedItem)} // Handle selection
@@ -543,6 +498,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                   />
                 </ResponsiveWrapper>
               </section>
+              {watchSpecimenQuality === 'Unacceptable' && (
               <section className={styles.formGroup}>
                 <ResponsiveWrapper>
                   <Controller
@@ -552,7 +508,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="reason"
                         value={value}
-                        labelText="Reason:"
+                        //labelText="Reason:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('reason', 'Reason:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Reason"
                         onChange={onChange}
                         onBlur={onBlur}
@@ -562,6 +525,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                   />
                 </ResponsiveWrapper>
               </section>
+              )}
               <section>
                 <ResponsiveWrapper>
                   <Controller
@@ -625,32 +589,47 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
               </section>
             </AccordionItem>
             <AccordionItem title="TEST RESULT" open className={styles.formContainer}>
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="testDate"
-                    control={control}
-                    render={({ field: { onChange, value, ref } }) => (
-                      <OpenmrsDatePicker
-                        id="testDate"
-                        //labelText={t('testDate', 'Test Date')}
-                        labelText={
-                          <>
+              <ResponsiveWrapper>
+                <Controller
+                  name="testDate"
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      let error = null;
+                      if (!value) {
+                        error = 'Test Date is required';
+                      }
+
+                      return error || true;
+                    },
+                  }}
+                  render={({ field: { onChange, value, ref, onBlur }, fieldState }) => (
+                    <OpenmrsDatePicker
+                      id="testDate"
+                      //labelText={t('testDate', 'Test Date')}
+                      labelText={
+                        <>
+                          <span className={styles.label}>
                             {t('testDate', 'Test Date:')}
                             <span className={styles.required}>*</span>
-                          </>
-                        }
-                        value={value}
-                        minDate={specimenSentToReferralDate}
-                        maxDate={today}
-                        onChange={(date) => onDateChange(date, 'testDate')}
-                        ref={ref}
-                        invalidText={error}
-                      />
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
+                          </span>
+                        </>
+                      }
+                      value={value}
+                      minDate={specimenSentToReferralDate}
+                      maxDate={today}
+                      //onChange={(date) => onDateChange(date, 'testDate')}
+                      onChange={(date) => {
+                        onDateChange(date, 'testDate')
+                        onBlur();
+                      }}
+                      ref={ref}
+                      invalid={!!fieldState.error}
+                      invalidText={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </ResponsiveWrapper>
               <section>
                 <ResponsiveWrapper>
                   <Controller
@@ -675,14 +654,17 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                           id="viralLoadCount"
                           label={
                             <>
-                              {t('testResult', 'Test Result')}
-                              <span className={styles.required}>*</span>
+                              <span className={styles.label}>
+                                {t('testResult', 'Test Result')}
+                                <span className={styles.required}>*</span>
+                              </span>
                             </>
                           }
                           onChange={(event) => field.onChange(event.target.value)}
                           value={field.value || ''}
+                          invalid={!!error}
+                          invalidText={error?.message}
                         />
-                        {error && <span className={styles.error}>{error.message}</span>}
                       </>
                     )}
                   />
@@ -697,7 +679,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="testedBy"
                         value={value}
-                        labelText="Tested by:"
+                        //labelText="Tested by:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('testedBy', 'Tested by:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Tested by"
                         onChange={onChange}
                         onBlur={onBlur}
@@ -716,7 +705,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="reviewedBy"
                         value={value}
-                        labelText="Reviewed by:"
+                        //labelText="Reviewed by:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('reviewedBy', 'Reviewed by:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Reviewed by"
                         onChange={onChange}
                         onBlur={onBlur}
@@ -737,7 +733,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                         <>
                           <OpenmrsDatePicker
                             id="panicAlertSent"
-                            labelText={t('panicAlertSent', 'Panic value alert sent')}
+                            //labelText={t('panicAlertSent', 'Panic value alert sent')}
+                            labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('panicAlertSent', 'Panic value alert sent')}
+                            </span>
+                          </>
+                        }
                             value={value}
                             minDate={testDate}
                             maxDate={today}
@@ -763,7 +766,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                         <>
                           <OpenmrsDatePicker
                             id="dispatchDate"
-                            labelText={t('dispatchDate', 'Dispatch date')}
+                            //labelText={t('dispatchDate', 'Dispatch date')}
+                            labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('dispatchDate', 'Dispatch date')}
+                            </span>
+                          </>
+                        }
                             value={value}
                             minDate={testDate}
                             maxDate={today}
@@ -811,7 +821,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="tempratureOnArrival"
                         value={value}
-                        labelText="Temprature On Arrival:"
+                        //labelText="Temprature On Arrival:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('tempratureOnArrival', 'Temprature On Arrival:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Temprature On Arrival"
                         onChange={onChange}
                         onBlur={onBlur}
@@ -832,7 +849,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                         <>
                           <OpenmrsDatePicker
                             id="resultReceivedDate"
-                            labelText={t('resultReceivedDate', 'Date result reached to Facility')}
+                            //labelText={t('resultReceivedDate', 'Date result reached to Facility')}
+                            labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('resultReceivedDate', 'Date result reached to Facility')}
+                            </span>
+                          </>
+                        }
                             value={value}
                             minDate={testDate}
                             maxDate={today}
@@ -856,7 +880,14 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       <TextInput
                         id="resultReceivedBy"
                         value={value}
-                        labelText="Result Received By:"
+                        //labelText="Result Received By:"
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('resultReceivedBy', 'Result Received By:')}
+                            </span>
+                          </>
+                        }
                         placeholder="Result Received By"
                         onChange={onChange}
                         onBlur={onBlur}

@@ -32,8 +32,8 @@ interface HivCareAndTreatmentProps {
 
 const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
-  const displayText = 'Viral Load Order Result';
-  const headerTitle = 'Viral Load Order Result';
+  const displayText = 'ETORRS';
+  const headerTitle = 'ETORRS';
   const { vlRequestOrders, isError, isValidating } = useVLRequestOrders(patientUuid);
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
@@ -76,9 +76,9 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     return vlRequestOrders
       ? vlRequestOrders.map((item, index) => ({
           id: item.uuid || index,
-          followUpDate: item.followUpDate ? formatDate(parseDate(item.followUpDate), { mode: 'wide' }) : null,
+          followUpDate: item.followUpDate ? formatDate(parseDate(item.followUpDate), { mode: 'wide', time: false, noToday: true }) : null,
           encounterId: item.encounterId,
-          requestedDate: item.requestedDate ? formatDate(parseDate(item.requestedDate), { mode: 'wide' }) : null,
+          requestedDate: item.requestedDate ? formatDate(parseDate(item.requestedDate), { mode: 'wide', time: false, noToday: true }) : null,
           regimen: item.regimen || null,
           reason: item.routineVl || item.targeted || null,
           specimenCollectedDate: item.specimenCollectedDate
@@ -86,7 +86,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
             : null,
           specimenType: item.specimenType || null,
           orderStatus: item.orderStatus || null,
-          testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide' }) : '--',
+          testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide'}) : '--',
           testResult: item.testResult || '--',
           testedBy: item.testedBy || '--',
           resultStatus: item.resultStatus || '--',
@@ -201,7 +201,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                             {row.cells.map((cell) => (
                               <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
                             ))}
-                            <TableCell className="cds--table-column-menu">
+                            <TableCell>
                               <EncounterActionMenu
                                 patientUuid={patientUuid}
                                 encounter={vlRequestOrders?.find((rowData) => rowData.uuid === row.id)}
