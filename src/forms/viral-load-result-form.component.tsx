@@ -74,7 +74,17 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const today = new Date();
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
-  const { control, handleSubmit, setValue, watch } = useForm<ResultFormInputs>();
+  //const { control, handleSubmit, setValue, watch } = useForm<ResultFormInputs>();
+  const {
+      control,
+      handleSubmit,
+      setValue,
+      watch,
+      clearErrors,
+      trigger,
+    } = useForm<ResultFormInputs>({
+      mode: 'onChange', // 🔥 important so errors clear when value changes
+    });
   const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
   const [facilityLocationName, setFacilityLocationName] = useState('');
   const [selectedField, setSelectedField] = useState<keyof ResultFormInputs | null>(null);
@@ -229,22 +239,43 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     | 'dateOfSampleCollectionDate'
     | 'requestedDate';
 
+  // const onDateChange = (value: any, dateField: DateFieldKey) => {
+  //   try {
+  //     const jsDate = new Date(value);
+  //     if (isNaN(jsDate.getTime())) {
+  //       throw new Error('Invalid Date');
+  //     }
+  //     const formattedDate =
+  //       dateField === 'dateOfSampleCollectionDate'
+  //         ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss') // Include time for datetime field
+  //         : dayjs(jsDate).format('YYYY-MM-DD');
+  //     setValue(dateField, formattedDate); // Dynamically set the value based on the field
+  //     setError(null);
+  //   } catch (e) {
+  //     setError('Invalid date format');
+  //   }
+  // };
   const onDateChange = (value: any, dateField: DateFieldKey) => {
-    try {
-      const jsDate = new Date(value);
-      if (isNaN(jsDate.getTime())) {
-        throw new Error('Invalid Date');
+      if (!value) {
+        setValue(dateField, '', { shouldValidate: true });
+        return;
       }
+  
+      const jsDate = new Date(value);
+      if (isNaN(jsDate.getTime())) return;
+  
       const formattedDate =
         dateField === 'dateOfSampleCollectionDate'
-          ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss') // Include time for datetime field
+          ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss')
           : dayjs(jsDate).format('YYYY-MM-DD');
-      setValue(dateField, formattedDate); // Dynamically set the value based on the field
-      setError(null);
-    } catch (e) {
-      setError('Invalid date format');
-    }
-  };
+  
+      setValue(dateField, formattedDate, {
+        shouldValidate: true,   // 🔥 re-run validation
+        shouldDirty: true,
+      });
+  
+      clearErrors(dateField);   // 🔥 remove error immediately
+    };
 
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
@@ -293,21 +324,21 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     const vlResultPayload = {
       encounterId,
       patientUuid,
-      testResultDate: fieldValues.testDate || '',
-      testResult: fieldValues.viralLoadCount || '',
-      testedBy: fieldValues.testedBy || '',
-      reviewedBy: fieldValues.reviewedBy || '',
-      aletSentDate: fieldValues.panicAlertSent || '',
-      dispatchedDate: fieldValues.dispatchDate || '',
-      labId: fieldValues.labID || '',
-      labName: fieldValues.testingLabName || '',
-      specimenReceivedDate: fieldValues.specimenReceivedDate || '',
+      testResultDate: fieldValues.testDate || null,
+      testResult: fieldValues.viralLoadCount || 'null',
+      testedBy: fieldValues.testedBy || 'null',
+      reviewedBy: fieldValues.reviewedBy || 'null',
+      aletSentDate: fieldValues.panicAlertSent || null,
+      dispatchedDate: fieldValues.dispatchDate || null,
+      labId: fieldValues.labID || 'null',
+      labName: fieldValues.testingLabName || 'null',
+      specimenReceivedDate: fieldValues.specimenReceivedDate || null,
       specimenQuality: fieldValues.specimenQuality,
-      reason: fieldValues.reason || '',
-      instrumentUsed: fieldValues.instrumentUsed || '',
-      temperatureOnArrival: fieldValues.tempratureOnArrival || '',
-      resultReachedToFacDate: fieldValues.resultReceivedDate || '',
-      resultReceivedByFacility: fieldValues.resultReceivedBy || '',
+      reason: fieldValues.reason || 'null',
+      instrumentUsed: fieldValues.instrumentUsed || 'null',
+      temperatureOnArrival: fieldValues.tempratureOnArrival || 'null',
+      resultReachedToFacDate: fieldValues.resultReceivedDate || null,
+      resultReceivedByFacility: fieldValues.resultReceivedBy || 'null',
       resultStatus: 'MANUAL_ETTORS',
     };
     const apiPayload = {
@@ -357,7 +388,6 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
         <Stack gap={1} className={styles.container}>
           <Accordion>
             <AccordionItem title="TESTING LABORATORY INFORMATION" open className={styles.formContainer}>
-
               <div className={styles.fieldWrapper}>
                 <ResponsiveWrapper>
                   <Controller
@@ -435,9 +465,9 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                           maxDate={today}
                           onChange={(date) => onDateChange(date, 'specimenReceivedDate')}
                           ref={ref}
-                          invalid={!!fieldState.error}
+                          //invalid={!!fieldState.error}
                         />
-                        {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                        {/* {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>} */}
                       </>
                     );
                   }}
@@ -593,17 +623,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 <Controller
                   name="testDate"
                   control={control}
-                  rules={{
-                    validate: (value) => {
-                      let error = null;
-                      if (!value) {
-                        error = 'Test Date is required';
-                      }
-
-                      return error || true;
-                    },
-                  }}
-                  render={({ field: { onChange, value, ref, onBlur }, fieldState }) => (
+                  rules={{ required: 'Test Date is required' }}                    
+                  render={({ field, fieldState }) => (
                     <OpenmrsDatePicker
                       id="testDate"
                       //labelText={t('testDate', 'Test Date')}
@@ -615,15 +636,12 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                           </span>
                         </>
                       }
-                      value={value}
+                      value={field.value ? new Date(field.value) : null}
                       minDate={specimenSentToReferralDate}
                       maxDate={today}
                       //onChange={(date) => onDateChange(date, 'testDate')}
-                      onChange={(date) => {
-                        onDateChange(date, 'testDate')
-                        onBlur();
-                      }}
-                      ref={ref}
+                      onChange={(date) => onDateChange(date, 'testDate')}
+                      ref={field.ref}
                       invalid={!!fieldState.error}
                       invalidText={fieldState.error?.message}
                     />

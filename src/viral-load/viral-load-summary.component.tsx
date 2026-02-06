@@ -30,6 +30,94 @@ interface HivCareAndTreatmentProps {
   patientUuid: string;
 }
 
+const targetedOpt = [
+    // {
+    //   concept: '9ffb81b7-3d9e-4f72-b1ba-3f60f07e4661',
+    //   label: 'Repeat or confirmatory VL: initial viral load greater than 1000',
+    //   hide: {
+    //     hideWhenExpression: 'true',
+    //   },
+    // },
+    {
+      concept: '4c6f2326-480f-449d-9932-fe85019997f6',
+      label: 'Suspected Antiretroviral failure',
+    },
+  ];
+
+  const routineTestOpt = [
+    {
+      concept: 'd1977f43-83a5-4b32-b589-33b9315e912d',
+      label: 'First viral load test at 3 months or longer post ART',
+      hide: {
+        hideWhenExpression: "pregnant !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      },
+    },
+    {
+      concept: 'b450f8e7-f55e-4788-8fb4-de5229db1b10',
+      label: 'First viral load test at 6 months or longer post ART',
+    },
+    {
+      concept: 'c616b09a-bcc2-49a9-b47c-7219f7695e91',
+      label: 'Second viral load test at 12 months post ART',
+    },
+    {
+      concept: '42a61e3f-e3e9-46a8-96e3-8643f4d476a4',
+      label: 'Annual viral load test',
+    },
+    {
+      concept: '89e9a9ee-15d1-424b-be5a-0765822cd35e',
+      label: 'At the first antenatal care visit',
+      hide: {
+        hideWhenExpression: "pregnant !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      },
+    },
+    {
+      concept: 'c1f8f2f6-ec39-422b-a305-58ccafec86c3',
+      label: 'At 34-36 weeks of gestation',
+      hide: {
+        hideWhenExpression: "pregnant !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      },
+    },
+    {
+      concept: '603faef3-2142-4ee7-8781-aa977ada17a2',
+      label: 'Three months after delivery',
+      hide: {
+        hideWhenExpression: "breastfeeding !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      },
+    },
+    {
+      concept: 'd3d6d8e3-0438-4f83-ba9f-ac46eed6782b',
+      label: 'Six months after the first viral load test at postnatal period',
+      hide: {
+        hideWhenExpression: "breastfeeding !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      },
+    },
+    {
+      concept: 'd18e5f76-5026-45d1-be18-f14ae936c692',
+      label: 'Every six months until MTCT ends',
+      hide: {
+        hideWhenExpression: "breastfeeding !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      },
+    },
+    {
+      concept: '9dbe8de0-c0ca-4bb0-ac46-207dd5ee5caf',
+      label:
+        'Viral load after EAC: repeat viral load where initial viral load greater than 50 and less than 1000 copies per ml',
+    },
+    {
+      concept: '4afb4baf-14c0-498b-b908-06b33e50476e',
+      label: 'Viral load after EAC: confirmatory viral load where initial viral load greater than 1000 copies per ml',
+    },
+  ];
+
+const targetedMap = Object.fromEntries(
+  targetedOpt.map((o) => [o.concept, o.label])
+);
+
+const routineMap = Object.fromEntries(
+  routineTestOpt.map((o) => [o.concept, o.label])
+);
+
 const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
   const displayText = 'ETORRS';
@@ -80,7 +168,12 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
           encounterId: item.encounterId,
           requestedDate: item.requestedDate ? formatDate(parseDate(item.requestedDate), { mode: 'wide', time: false, noToday: true }) : null,
           regimen: item.regimen || null,
-          reason: item.routineVl || item.targeted || null,
+          //reason: item.routineVl || item.targeted || null,
+          reason: item.routineVl
+          ? routineMap[item.routineVl] || item.routineVl
+          : item.targeted
+          ? targetedMap[item.targeted] || item.targeted
+          : null,
           specimenCollectedDate: item.specimenCollectedDate
             ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
             : null,
