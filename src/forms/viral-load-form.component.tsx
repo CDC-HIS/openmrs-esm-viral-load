@@ -233,8 +233,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       setValue('dateOfSampleCollectionDate', ''); // or default value
     }
 
-    setValue('providerTelephoneNumber', providerPhoneNo === 'null' ? '' : providerPhoneNo);
-    setValue('providerName', requestedBy === 'null' ? '' : requestedBy);
+    setValue('providerTelephoneNumber', providerPhoneNo);
+    setValue('providerName', requestedBy);
 
     const specimenTypeValueFromDB = specimenType;
     // Convert "DPS" → "DPS (Dried Plasma Spot)" for radio button
@@ -242,10 +242,10 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
     setValue('specimenType', initialSpecimenType);
 
-    if (routineVl && routineVl !== 'null') {
+    if (routineVl) {
       setValue('reasonForVlTest', 'Routine');
     }
-    if (targeted && targeted !== 'null') {
+    if (targeted) {
       setValue('reasonForVlTest', 'Targeted');
     }
 
@@ -351,15 +351,15 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       encounterId,
       // routineVl: fieldValues.reasonForVlTest === 'Targeted' ? 'null' : fieldValues.routineVLtest,
       // targeted: fieldValues.reasonForVlTest === 'Routine' ? 'null' : fieldValues.targetedVLtest,
-      targeted: fieldValues.reasonForVlTest === 'Targeted' ? fieldValues.targetedVLtest : 'null',
-      routineVl: fieldValues.reasonForVlTest === 'Routine' ? fieldValues.routineVLtest : 'null',
+      targeted: fieldValues.reasonForVlTest === 'Targeted' ? fieldValues.targetedVLtest : null,
+      routineVl: fieldValues.reasonForVlTest === 'Routine' ? fieldValues.routineVLtest : null,
       patientUuid,
       specimenCollectedDate: fieldValues.dateOfSampleCollectionDate,
       specimenSentToReferralDate: fieldValues.dateOfSpecimenSent,
       specimenType: specimenTypeSaveMap[fieldValues.specimenType],
-      requestedBy: fieldValues.providerName ? fieldValues.providerName : 'null',
+      requestedBy: fieldValues.providerName ? fieldValues.providerName : null,
       requestedDate: fieldValues.reqDate,
-      providerPhoneNo: fieldValues.providerTelephoneNumber ? fieldValues.providerTelephoneNumber : 'null',
+      providerPhoneNo: fieldValues.providerTelephoneNumber ? fieldValues.providerTelephoneNumber : null,
       orderStatus: 'COMPLETE',
     };
 

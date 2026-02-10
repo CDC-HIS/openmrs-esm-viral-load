@@ -15,11 +15,7 @@ import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
 import { saveEncounter, saveVlTestResult } from '../api/api';
-import {
-  VIRALLOAD_ENCOUNTER_TYPE_UUID,
-  VIRALLOAD_RESULT_FORM_UUID,
-  viralLoadFieldConcepts,
-} from '../constants';
+import { VIRALLOAD_ENCOUNTER_TYPE_UUID, VIRALLOAD_RESULT_FORM_UUID, viralLoadFieldConcepts } from '../constants';
 import dayjs from 'dayjs';
 import { useVLRequestOrders } from '../viral-load/viral-load.resource';
 import type { OpenmrsEncounter } from '../types';
@@ -75,16 +71,9 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   //const { control, handleSubmit, setValue, watch } = useForm<ResultFormInputs>();
-  const {
-      control,
-      handleSubmit,
-      setValue,
-      watch,
-      clearErrors,
-      trigger,
-    } = useForm<ResultFormInputs>({
-      mode: 'onChange', // 🔥 important so errors clear when value changes
-    });
+  const { control, handleSubmit, setValue, watch, clearErrors, trigger } = useForm<ResultFormInputs>({
+    mode: 'onChange', // 🔥 important so errors clear when value changes
+  });
   const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
   const [facilityLocationName, setFacilityLocationName] = useState('');
   const [selectedField, setSelectedField] = useState<keyof ResultFormInputs | null>(null);
@@ -256,31 +245,31 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   //   }
   // };
   const onDateChange = (value: any, dateField: DateFieldKey) => {
-      if (!value) {
-        setValue(dateField, '', { shouldValidate: true });
-        return;
-      }
-  
-      const jsDate = new Date(value);
-      if (isNaN(jsDate.getTime())) return;
-  
-      const formattedDate =
-        dateField === 'dateOfSampleCollectionDate'
-          ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss')
-          : dayjs(jsDate).format('YYYY-MM-DD');
-  
-      setValue(dateField, formattedDate, {
-        shouldValidate: true,   // 🔥 re-run validation
-        shouldDirty: true,
-      });
-  
-      clearErrors(dateField);   // 🔥 remove error immediately
-    };
+    if (!value) {
+      setValue(dateField, '', { shouldValidate: true });
+      return;
+    }
+
+    const jsDate = new Date(value);
+    if (isNaN(jsDate.getTime())) return;
+
+    const formattedDate =
+      dateField === 'dateOfSampleCollectionDate'
+        ? dayjs(jsDate).format('YYYY-MM-DD HH:mm:ss')
+        : dayjs(jsDate).format('YYYY-MM-DD');
+
+    setValue(dateField, formattedDate, {
+      shouldValidate: true, // 🔥 re-run validation
+      shouldDirty: true,
+    });
+
+    clearErrors(dateField); // 🔥 remove error immediately
+  };
 
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
       ignoreChanges: false,
-      onWorkspaceClose: () => { },
+      onWorkspaceClose: () => {},
     };
     closeWorkspace(name, options);
   };
@@ -325,20 +314,20 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       encounterId,
       patientUuid,
       testResultDate: fieldValues.testDate || null,
-      testResult: fieldValues.viralLoadCount || 'null',
-      testedBy: fieldValues.testedBy || 'null',
-      reviewedBy: fieldValues.reviewedBy || 'null',
+      testResult: fieldValues.viralLoadCount || null,
+      testedBy: fieldValues.testedBy || null,
+      reviewedBy: fieldValues.reviewedBy || null,
       aletSentDate: fieldValues.panicAlertSent || null,
       dispatchedDate: fieldValues.dispatchDate || null,
-      labId: fieldValues.labID || 'null',
-      labName: fieldValues.testingLabName || 'null',
+      labId: fieldValues.labID || '',
+      labName: fieldValues.testingLabName || null,
       specimenReceivedDate: fieldValues.specimenReceivedDate || null,
       specimenQuality: fieldValues.specimenQuality,
-      reason: fieldValues.reason || 'null',
-      instrumentUsed: fieldValues.instrumentUsed || 'null',
-      temperatureOnArrival: fieldValues.tempratureOnArrival || 'null',
+      reason: fieldValues.reason || null,
+      instrumentUsed: fieldValues.instrumentUsed || null,
+      temperatureOnArrival: fieldValues.tempratureOnArrival || null,
       resultReachedToFacDate: fieldValues.resultReceivedDate || null,
-      resultReceivedByFacility: fieldValues.resultReceivedBy || 'null',
+      resultReceivedByFacility: fieldValues.resultReceivedBy || null,
       resultStatus: 'MANUAL_ETTORS',
     };
     const apiPayload = {
@@ -400,9 +389,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                         //labelText="Lab ID:"
                         labelText={
                           <>
-                            <span className={styles.label}>
-                              {t('labID', 'Lab ID:')}
-                            </span>
+                            <span className={styles.label}>{t('labID', 'Lab ID:')}</span>
                           </>
                         }
                         placeholder="Lab ID"
@@ -426,9 +413,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                         //labelText="Testing lab name:"
                         labelText={
                           <>
-                            <span className={styles.label}>
-                              {t('testingLabName', 'Testing lab name:')}
-                            </span>
+                            <span className={styles.label}>{t('testingLabName', 'Testing lab name:')}</span>
                           </>
                         }
                         placeholder="Testing lab name"
@@ -511,9 +496,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                           //titleText={t('specimenQuality', 'Specimen quality')}
                           titleText={
                             <>
-                              <span className={styles.label}>
-                                {t('specimenQuality', 'Specimen quality')}
-                              </span>
+                              <span className={styles.label}>{t('specimenQuality', 'Specimen quality')}</span>
                             </>
                           }
                           items={['Acceptable', 'Unacceptable']} // Specify the dropdown options
@@ -529,285 +512,282 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                 </ResponsiveWrapper>
               </section>
               {watchSpecimenQuality === 'Unacceptable' && (
-              <section className={styles.formGroup}>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="reason"
-                    control={control}
-                    render={({ field: { onChange, onBlur, value, ref } }) => (
-                      <TextInput
-                        id="reason"
-                        value={value}
-                        //labelText="Reason:"
-                        labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('reason', 'Reason:')}
-                            </span>
-                          </>
-                        }
-                        placeholder="Reason"
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        ref={ref}
-                      />
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              )}
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="instrumentUsed"
-                    control={control}
-                    defaultValue="" // Initialize as an empty string
-                    render={({ field: { onChange, value } }) => (
-                      <div role="group" aria-labelledby="instrumentUsedLegend">
-                        <legend id="instrumentUsedLegend" style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
-                          Instrument Used
-                        </legend>
-
-                        {/* Abbot Checkbox */}
-                        <Checkbox
-                          id="instrumentUsedAbbot"
-                          labelText="Abbot"
-                          checked={value.includes('Abbot')}
-                          onChange={(event) => {
-                            const newValue = event.target.checked
-                              ? value
-                                ? `${value}, Abbot`
-                                : 'Abbot' // Append 'Abbot' if checked
-                              : value.replace(', Abbot', '').replace('Abbot', ''); // Remove 'Abbot' if unchecked
-                            onChange(newValue);
-                          }}
-                        />
-
-                        {/* Roche Checkbox */}
-                        <Checkbox
-                          id="instrumentUsedRoche"
-                          labelText="Roche"
-                          checked={value.includes('Roche')}
-                          onChange={(event) => {
-                            const newValue = event.target.checked
-                              ? value
-                                ? `${value}, Roche`
-                                : 'Roche' // Append 'Roche' if checked
-                              : value.replace(', Roche', '').replace('Roche', ''); // Remove 'Roche' if unchecked
-                            onChange(newValue);
-                          }}
-                        />
-
-                        {/* Xpert Checkbox */}
-                        <Checkbox
-                          id="instrumentUsedXpert"
-                          labelText="Xpert"
-                          checked={value.includes('Xpert')}
-                          onChange={(event) => {
-                            const newValue = event.target.checked
-                              ? value
-                                ? `${value}, Xpert`
-                                : 'Xpert' // Append 'Xpert' if checked
-                              : value.replace(', Xpert', '').replace('Xpert', ''); // Remove 'Xpert' if unchecked
-                            onChange(newValue);
-                          }}
-                        />
-                      </div>
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-            </AccordionItem>
-            <AccordionItem title="TEST RESULT" open className={styles.formContainer}>
-              <ResponsiveWrapper>
-                <Controller
-                  name="testDate"
-                  control={control}
-                  rules={{ required: 'Test Date is required' }}                    
-                  render={({ field, fieldState }) => (
-                    <OpenmrsDatePicker
-                      id="testDate"
-                      //labelText={t('testDate', 'Test Date')}
-                      labelText={
-                        <>
-                          <span className={styles.label}>
-                            {t('testDate', 'Test Date:')}
-                            <span className={styles.required}>*</span>
-                          </span>
-                        </>
-                      }
-                      value={field.value ? new Date(field.value) : null}
-                      minDate={specimenSentToReferralDate}
-                      maxDate={today}
-                      //onChange={(date) => onDateChange(date, 'testDate')}
-                      onChange={(date) => onDateChange(date, 'testDate')}
-                      ref={field.ref}
-                      invalid={!!fieldState.error}
-                      invalidText={fieldState.error?.message}
-                    />
-                  )}
-                />
-              </ResponsiveWrapper>
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    control={control}
-                    name="viralLoadCount"
-                    rules={{
-                      required: 'Test result is required', // Optional: Customize this validation message
-                      validate: (value) => {
-                        // Ensure the value is a non-negative integer
-                        return Number.isInteger(Number(value)) && Number(value) >= 0
-                          ? true
-                          : 'Please enter a valid number (0 or greater, no fractions)';
-                      },
-                    }}
-                    render={({ field, fieldState: { error } }) => (
-                      <>
-                        <NumberInput
-                          allowEmpty
-                          className={styles.numberInput}
-                          disableWheel
-                          hideSteppers
-                          id="viralLoadCount"
-                          label={
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="reason"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="reason"
+                          value={value}
+                          //labelText="Reason:"
+                          labelText={
                             <>
-                              <span className={styles.label}>
-                                {t('testResult', 'Test Result')}
-                                <span className={styles.required}>*</span>
-                              </span>
+                              <span className={styles.label}>{t('reason', 'Reason:')}</span>
                             </>
                           }
-                          onChange={(event) => field.onChange(event.target.value)}
-                          value={field.value || ''}
-                          invalid={!!error}
-                          invalidText={error?.message}
+                          placeholder="Reason"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
                         />
-                      </>
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              <section className={styles.formGroup}>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="testedBy"
-                    control={control}
-                    render={({ field: { onChange, onBlur, value, ref } }) => (
-                      <TextInput
-                        id="testedBy"
-                        value={value}
-                        //labelText="Tested by:"
-                        labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('testedBy', 'Tested by:')}
-                            </span>
-                          </>
-                        }
-                        placeholder="Tested by"
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        ref={ref}
-                      />
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              <section className={styles.formGroup}>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="reviewedBy"
-                    control={control}
-                    render={({ field: { onChange, onBlur, value, ref } }) => (
-                      <TextInput
-                        id="reviewedBy"
-                        value={value}
-                        //labelText="Reviewed by:"
-                        labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('reviewedBy', 'Reviewed by:')}
-                            </span>
-                          </>
-                        }
-                        placeholder="Reviewed by"
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        ref={ref}
-                      />
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="panicAlertSent"
-                    control={control}
-                    render={({ field: { onChange, value, ref }, fieldState }) => {
-                      const testDate = watch('testDate');
-                      return (
-                        <>
-                          <OpenmrsDatePicker
-                            id="panicAlertSent"
-                            //labelText={t('panicAlertSent', 'Panic value alert sent')}
-                            labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('panicAlertSent', 'Panic value alert sent')}
-                            </span>
-                          </>
-                        }
-                            value={value}
-                            minDate={testDate}
-                            maxDate={today}
-                            onChange={(date) => onDateChange(date, 'panicAlertSent')}
-                            ref={ref}
-                            invalid={!!fieldState.error}
-                          />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                        </>
-                      );
-                    }}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="dispatchDate"
-                    control={control}
-                    render={({ field: { onChange, value, ref }, fieldState }) => {
-                      const testDate = watch('testDate');
-                      return (
-                        <>
-                          <OpenmrsDatePicker
-                            id="dispatchDate"
-                            //labelText={t('dispatchDate', 'Dispatch date')}
-                            labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('dispatchDate', 'Dispatch date')}
-                            </span>
-                          </>
-                        }
-                            value={value}
-                            minDate={testDate}
-                            maxDate={today}
-                            onChange={(date) => onDateChange(date, 'dispatchDate')}
-                            ref={ref}
-                            invalid={!!fieldState.error}
-                          />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                        </>
-                      );
-                    }}
-                  />
-                </ResponsiveWrapper>
-              </section>
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+              )}
+              {watchSpecimenQuality !== 'Unacceptable' && (
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="instrumentUsed"
+                      control={control}
+                      defaultValue="" // Initialize as an empty string
+                      render={({ field: { onChange, value } }) => (
+                        <div role="group" aria-labelledby="instrumentUsedLegend">
+                          <legend id="instrumentUsedLegend" style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
+                            Instrument Used
+                          </legend>
 
-              {/* <section className={styles.formGroup}>
+                          {/* Abbot Checkbox */}
+                          <Checkbox
+                            id="instrumentUsedAbbot"
+                            labelText="Abbot"
+                            checked={value.includes('Abbot')}
+                            onChange={(event) => {
+                              const newValue = event.target.checked
+                                ? value
+                                  ? `${value}, Abbot`
+                                  : 'Abbot' // Append 'Abbot' if checked
+                                : value.replace(', Abbot', '').replace('Abbot', ''); // Remove 'Abbot' if unchecked
+                              onChange(newValue);
+                            }}
+                          />
+
+                          {/* Roche Checkbox */}
+                          <Checkbox
+                            id="instrumentUsedRoche"
+                            labelText="Roche"
+                            checked={value.includes('Roche')}
+                            onChange={(event) => {
+                              const newValue = event.target.checked
+                                ? value
+                                  ? `${value}, Roche`
+                                  : 'Roche' // Append 'Roche' if checked
+                                : value.replace(', Roche', '').replace('Roche', ''); // Remove 'Roche' if unchecked
+                              onChange(newValue);
+                            }}
+                          />
+
+                          {/* Xpert Checkbox */}
+                          <Checkbox
+                            id="instrumentUsedXpert"
+                            labelText="Xpert"
+                            checked={value.includes('Xpert')}
+                            onChange={(event) => {
+                              const newValue = event.target.checked
+                                ? value
+                                  ? `${value}, Xpert`
+                                  : 'Xpert' // Append 'Xpert' if checked
+                                : value.replace(', Xpert', '').replace('Xpert', ''); // Remove 'Xpert' if unchecked
+                              onChange(newValue);
+                            }}
+                          />
+                        </div>
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+              )}
+            </AccordionItem>
+            {watchSpecimenQuality !== 'Unacceptable' && (
+              <AccordionItem title="TEST RESULT" open className={styles.formContainer}>
+                <ResponsiveWrapper>
+                  <Controller
+                    name="testDate"
+                    control={control}
+                    rules={{
+                      //required: 'Test Date is required'
+                      required: watchSpecimenQuality !== 'Unacceptable' ? 'Test Date is required' : false,
+                    }}
+                    render={({ field, fieldState }) => (
+                      <OpenmrsDatePicker
+                        id="testDate"
+                        //labelText={t('testDate', 'Test Date')}
+                        labelText={
+                          <>
+                            <span className={styles.label}>
+                              {t('testDate', 'Test Date:')}
+                              <span className={styles.required}>*</span>
+                            </span>
+                          </>
+                        }
+                        value={field.value ? new Date(field.value) : null}
+                        minDate={specimenSentToReferralDate}
+                        maxDate={today}
+                        //onChange={(date) => onDateChange(date, 'testDate')}
+                        onChange={(date) => onDateChange(date, 'testDate')}
+                        ref={field.ref}
+                        invalid={!!fieldState.error}
+                        invalidText={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                </ResponsiveWrapper>
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      control={control}
+                      name="viralLoadCount"
+                      rules={{
+                        //required: 'Test result is required', // Optional: Customize this validation message
+                        required: watchSpecimenQuality !== 'Unacceptable' ? 'Test result is required' : false,
+                        validate: (value) => {
+                          // Ensure the value is a non-negative integer
+                          return Number.isInteger(Number(value)) && Number(value) >= 0
+                            ? true
+                            : 'Please enter a valid number (0 or greater, no fractions)';
+                        },
+                      }}
+                      render={({ field, fieldState: { error } }) => (
+                        <>
+                          <NumberInput
+                            allowEmpty
+                            className={styles.numberInput}
+                            disableWheel
+                            hideSteppers
+                            id="viralLoadCount"
+                            label={
+                              <>
+                                <span className={styles.label}>
+                                  {t('testResult', 'Test Result')}
+                                  <span className={styles.required}>*</span>
+                                </span>
+                              </>
+                            }
+                            onChange={(event) => field.onChange(event.target.value)}
+                            value={field.value || ''}
+                            invalid={!!error}
+                            invalidText={error?.message}
+                          />
+                        </>
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="testedBy"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="testedBy"
+                          value={value}
+                          //labelText="Tested by:"
+                          labelText={
+                            <>
+                              <span className={styles.label}>{t('testedBy', 'Tested by:')}</span>
+                            </>
+                          }
+                          placeholder="Tested by"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
+                        />
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="reviewedBy"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="reviewedBy"
+                          value={value}
+                          //labelText="Reviewed by:"
+                          labelText={
+                            <>
+                              <span className={styles.label}>{t('reviewedBy', 'Reviewed by:')}</span>
+                            </>
+                          }
+                          placeholder="Reviewed by"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
+                        />
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="panicAlertSent"
+                      control={control}
+                      render={({ field: { onChange, value, ref }, fieldState }) => {
+                        const testDate = watch('testDate');
+                        return (
+                          <>
+                            <OpenmrsDatePicker
+                              id="panicAlertSent"
+                              //labelText={t('panicAlertSent', 'Panic value alert sent')}
+                              labelText={
+                                <>
+                                  <span className={styles.label}>{t('panicAlertSent', 'Panic value alert sent')}</span>
+                                </>
+                              }
+                              value={value}
+                              minDate={testDate}
+                              maxDate={today}
+                              onChange={(date) => onDateChange(date, 'panicAlertSent')}
+                              ref={ref}
+                              invalid={!!fieldState.error}
+                            />
+                            {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                          </>
+                        );
+                      }}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="dispatchDate"
+                      control={control}
+                      render={({ field: { onChange, value, ref }, fieldState }) => {
+                        const testDate = watch('testDate');
+                        return (
+                          <>
+                            <OpenmrsDatePicker
+                              id="dispatchDate"
+                              //labelText={t('dispatchDate', 'Dispatch date')}
+                              labelText={
+                                <>
+                                  <span className={styles.label}>{t('dispatchDate', 'Dispatch date')}</span>
+                                </>
+                              }
+                              value={value}
+                              minDate={testDate}
+                              maxDate={today}
+                              onChange={(date) => onDateChange(date, 'dispatchDate')}
+                              ref={ref}
+                              invalid={!!fieldState.error}
+                            />
+                            {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
+                          </>
+                        );
+                      }}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+
+                {/* <section className={styles.formGroup}>
           <ResponsiveWrapper>
           <Controller
       //key={reaction.uuid}
@@ -830,92 +810,90 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
           </ResponsiveWrapper>
         </section> */}
 
-              <section className={styles.formGroup}>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="tempratureOnArrival"
-                    control={control}
-                    render={({ field: { onChange, onBlur, value, ref } }) => (
-                      <TextInput
-                        id="tempratureOnArrival"
-                        value={value}
-                        //labelText="Temprature On Arrival:"
-                        labelText={
+                <section className={styles.formGroup}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="tempratureOnArrival"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="tempratureOnArrival"
+                          value={value}
+                          //labelText="Temprature On Arrival:"
+                          labelText={
+                            <>
+                              <span className={styles.label}>{t('tempratureOnArrival', 'Temprature On Arrival:')}</span>
+                            </>
+                          }
+                          placeholder="Temprature On Arrival"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
+                        />
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="resultReceivedDate"
+                      control={control}
+                      render={({ field: { onChange, value, ref }, fieldState }) => {
+                        const testDate = watch('testDate');
+                        return (
                           <>
-                            <span className={styles.label}>
-                              {t('tempratureOnArrival', 'Temprature On Arrival:')}
-                            </span>
+                            <OpenmrsDatePicker
+                              id="resultReceivedDate"
+                              //labelText={t('resultReceivedDate', 'Date result reached to Facility')}
+                              labelText={
+                                <>
+                                  <span className={styles.label}>
+                                    {t('resultReceivedDate', 'Date result reached to Facility')}
+                                  </span>
+                                </>
+                              }
+                              value={value}
+                              minDate={testDate}
+                              maxDate={today}
+                              onChange={(date) => onDateChange(date, 'resultReceivedDate')}
+                              ref={ref}
+                              invalid={!!fieldState.error}
+                            />
+                            {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
                           </>
-                        }
-                        placeholder="Temprature On Arrival"
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        ref={ref}
-                      />
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              <section>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="resultReceivedDate"
-                    control={control}
-                    render={({ field: { onChange, value, ref }, fieldState }) => {
-                      const testDate = watch('testDate');
-                      return (
-                        <>
-                          <OpenmrsDatePicker
-                            id="resultReceivedDate"
-                            //labelText={t('resultReceivedDate', 'Date result reached to Facility')}
-                            labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('resultReceivedDate', 'Date result reached to Facility')}
-                            </span>
-                          </>
-                        }
-                            value={value}
-                            minDate={testDate}
-                            maxDate={today}
-                            onChange={(date) => onDateChange(date, 'resultReceivedDate')}
-                            ref={ref}
-                            invalid={!!fieldState.error}
-                          />
-                          {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
-                        </>
-                      );
-                    }}
-                  />
-                </ResponsiveWrapper>
-              </section>
-              <section className={styles.lastField}>
-                <ResponsiveWrapper>
-                  <Controller
-                    name="resultReceivedBy"
-                    control={control}
-                    render={({ field: { onChange, onBlur, value, ref } }) => (
-                      <TextInput
-                        id="resultReceivedBy"
-                        value={value}
-                        //labelText="Result Received By:"
-                        labelText={
-                          <>
-                            <span className={styles.label}>
-                              {t('resultReceivedBy', 'Result Received By:')}
-                            </span>
-                          </>
-                        }
-                        placeholder="Result Received By"
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        ref={ref}
-                      />
-                    )}
-                  />
-                </ResponsiveWrapper>
-              </section>
-            </AccordionItem>
+                        );
+                      }}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+                <section className={styles.lastField}>
+                  <ResponsiveWrapper>
+                    <Controller
+                      name="resultReceivedBy"
+                      control={control}
+                      render={({ field: { onChange, onBlur, value, ref } }) => (
+                        <TextInput
+                          id="resultReceivedBy"
+                          value={value}
+                          //labelText="Result Received By:"
+                          labelText={
+                            <>
+                              <span className={styles.label}>{t('resultReceivedBy', 'Result Received By:')}</span>
+                            </>
+                          }
+                          placeholder="Result Received By"
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          ref={ref}
+                        />
+                      )}
+                    />
+                  </ResponsiveWrapper>
+                </section>
+              </AccordionItem>
+            )}
+
             <div className={styles.fieldWrapper}></div>
             <ButtonSet className={styles.buttonSet}>
               <Button

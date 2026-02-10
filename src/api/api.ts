@@ -1,5 +1,6 @@
-import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+import { fhirBaseUrl, openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
 import { encounterRepresentation } from '../constants';
+import useSWR from 'swr';
 
 export function saveEncounter(abortController: AbortController, payload, encounterUuid?: string) {
   const url = encounterUuid
@@ -19,10 +20,30 @@ export function saveEncounter(abortController: AbortController, payload, encount
   });
 }
 
-export function saveVlTestRequestResult(
-  abortController: AbortController,
-  payload: any
-) {
+export function useLatestObs(patientUuid: string, conceptUuid: string, encounterType?: string) {
+  const searchParams = new URLSearchParams({
+    patient: patientUuid,
+    code: conceptUuid,
+    _sort: '-date',
+    _count: '1',
+  });
+  if (encounterType) {
+    searchParams.append('encounter.type', encounterType);
+  }
+
+  const url = `${fhirBaseUrl}/Observation?${searchParams.toString()}`;
+
+  const { data: response, error, isLoading } = useSWR<{ data: any }, Error>(url, openmrsFetch);
+
+  return {
+    latestMatched: response?.data?.entry?.length ? response?.data?.entry[0]?.resource : null,
+    latestLoading: isLoading,
+    latestError: error,
+    cacheKey: url,
+  };
+}
+
+export function saveVlTestRequestResult(abortController: AbortController, payload: any) {
   // Construct the URL based on whether a UUID is provided
   const url = `${restBaseUrl}/vltestrequestresult`;
 
@@ -47,11 +68,7 @@ export function saveVlTestRequestResult(
     });
 }
 
-export function saveVlTestResult(
-  abortController: AbortController,
-  payload: any, 
-  encounterUuid?: string
-) {
+export function saveVlTestResult(abortController: AbortController, payload: any, encounterUuid?: string) {
   // Construct the URL based on whether a UUID is provided
   const url = `${restBaseUrl}/vltestrequestresult/${encounterUuid}`;
 
@@ -75,7 +92,6 @@ export function saveVlTestResult(
       throw err;
     });
 }
-
 
 export function fetchLocation() {
   return openmrsFetch(`${restBaseUrl}/location?q=&v=default`);

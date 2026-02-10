@@ -23,7 +23,7 @@ import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { TableExpandRow, TableExpandedRow } from '@carbon/react';
 import debounce from 'lodash.debounce';
-import { fetchPatientData, fetchVlTestRequestResult } from '../api/api';
+import { fetchPatientData, fetchVlTestRequestResult, useLatestObs } from '../api/api';
 import { config } from 'dotenv';
 
 interface HivCareAndTreatmentProps {
@@ -128,6 +128,14 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
   const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);
 
+  const { latestMatched: hasEntryInformation, cacheKey: entryInformationKey } = useLatestObs(
+    patientUuid,
+    '5c118396-52dc-4cac-8860-e6d8e4a7f296',
+    '136b2ded-22a3-4831-a39a-088d35a50ef5',
+  );
+
+  const hasFollowupRecord = hasEntryInformation != null;
+
   useEffect(() => {
     const getVlTestRequestData = async () => {
       try {
@@ -169,12 +177,11 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
             : null,
           regimen: item.regimen || null,
           //reason: item.routineVl || item.targeted || null,
-          reason:
-            item.routineVl && item.routineVl !== 'null'
-              ? routineMap[item.routineVl] || item.routineVl
-              : item.targeted && item.targeted !== 'null'
-              ? targetedMap[item.targeted] || item.targeted
-              : null,
+          reason: item.routineVl
+            ? routineMap[item.routineVl] || item.routineVl
+            : item.targeted
+            ? targetedMap[item.targeted] || item.targeted
+            : null,
           specimenCollectedDate: item.specimenCollectedDate
             ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
             : null,
@@ -242,14 +249,16 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     <div className={styles.widgetCard}>
       <CardHeader title={headerTitle}>
         {isValidating && <InlineLoading />}
-        <Button
-          kind="ghost"
-          renderIcon={(props) => <Add size={16} {...props} />}
-          iconDescription="Add"
-          onClick={launchViralLoadForm}
-        >
-          {t('add', 'Add')}
-        </Button>
+        {hasFollowupRecord && (
+          <Button
+            kind="ghost"
+            renderIcon={(props) => <Add size={16} {...props} />}
+            iconDescription="Add"
+            onClick={launchViralLoadForm}
+          >
+            {t('add', 'Add')}
+          </Button>
+        )}
       </CardHeader>
       {currentRows.length > 0 ? (
         <>
