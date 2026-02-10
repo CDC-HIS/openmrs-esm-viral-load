@@ -49,7 +49,7 @@ type EncounterType = {
   specimenType?: string;
   orderStatus?: string;
   exchangeStatus?: string;
-  uuid?: string;
+  requestId?: string;
   encounterId?: string;
   id?: string;
   requestedDate?: string;
@@ -185,7 +185,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     specimenType = '',
     orderStatus = '',
     exchangeStatus = '',
-    uuid = null,
+    requestId = 0,
     encounterId = 0,
     id = '',
     requestedDate = '',
@@ -347,7 +347,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     // const providerName = fieldValues.providerName ? fieldValues.providerName : 'null';
 
     const vlResultPayload = {
-      uuid,
+      requestId,
       encounterId,
       // routineVl: fieldValues.reasonForVlTest === 'Targeted' ? 'null' : fieldValues.routineVLtest,
       // targeted: fieldValues.reasonForVlTest === 'Routine' ? 'null' : fieldValues.targetedVLtest,
@@ -763,7 +763,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                   <InlineLoading />
                 ) : encounter && orderStatus !== 'COMPLETE' ? (
                   t('saveAndClose', 'Complete Order')
-                ) : !uuid ? (
+                ) : !requestId ? (
                   t('saveAndClose', 'Save Order')
                 ) : (
                   t('saveAndClose', 'Update Order')
