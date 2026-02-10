@@ -242,10 +242,10 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
 
     setValue('specimenType', initialSpecimenType);
 
-    if (routineVl) {
+    if (routineVl && routineVl !== 'null') {
       setValue('reasonForVlTest', 'Routine');
     }
-    if (targeted) {
+    if (targeted && targeted !== 'null') {
       setValue('reasonForVlTest', 'Targeted');
     }
 
