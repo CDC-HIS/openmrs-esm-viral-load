@@ -15,11 +15,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
 import { Button } from '@carbon/react';
-import {
-  fetchVlTestRequestResult,
-  saveEncounter,
-  saveVlTestRequestResult,
-} from '../api/api';
+import { fetchVlTestRequestResult, saveEncounter, saveVlTestRequestResult } from '../api/api';
 import dayjs from 'dayjs';
 import { useVLRequestOrders } from '../viral-load/viral-load.resource';
 import { ButtonSet } from '@carbon/react';
@@ -53,6 +49,7 @@ type EncounterType = {
   specimenType?: string;
   orderStatus?: string;
   exchangeStatus?: string;
+  uuid?: string;
   encounterId?: string;
   id?: string;
   requestedDate?: string;
@@ -77,14 +74,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   const today = new Date();
   //const { control, handleSubmit, setValue, watch } = useForm<FormInputs>();
 
-  const [facilityLocationUUID, setFacilityLocationUUID] = useState(''); const {
-    control,
-    handleSubmit,
-    setValue,
-    watch,
-    clearErrors,
-    trigger,
-  } = useForm<FormInputs>({
+  const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
+  const { control, handleSubmit, setValue, watch, clearErrors, trigger } = useForm<FormInputs>({
     mode: 'onChange', // 🔥 important so errors clear when value changes
   });
 
@@ -194,6 +185,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     specimenType = '',
     orderStatus = '',
     exchangeStatus = '',
+    uuid = '',
     encounterId = 0,
     id = '',
     requestedDate = '',
@@ -242,7 +234,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     }
 
     setValue('providerTelephoneNumber', providerPhoneNo === 'null' ? '' : providerPhoneNo);
-    setValue('providerName', requestedBy === 'null' ? '' : requestedBy );
+    setValue('providerName', requestedBy === 'null' ? '' : requestedBy);
 
     const specimenTypeValueFromDB = specimenType;
     // Convert "DPS" → "DPS (Dried Plasma Spot)" for radio button
@@ -265,8 +257,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     // const routineVlValueFromDB = mappedValue;
 
     // setValue('routineVLtest', routineVlValueFromDB);
-
-
 
     if (specimenSentToReferralDate && dayjs(specimenSentToReferralDate).isValid()) {
       setValue('dateOfSpecimenSent', dayjs(specimenSentToReferralDate).format('YYYY-MM-DD'));
@@ -320,18 +310,17 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
         : dayjs(jsDate).format('YYYY-MM-DD');
 
     setValue(dateField, formattedDate, {
-      shouldValidate: true,   // 🔥 re-run validation
+      shouldValidate: true, // 🔥 re-run validation
       shouldDirty: true,
     });
 
-    clearErrors(dateField);   // 🔥 remove error immediately
+    clearErrors(dateField); // 🔥 remove error immediately
   };
-
 
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
       ignoreChanges: false,
-      onWorkspaceClose: () => { },
+      onWorkspaceClose: () => {},
     };
     closeWorkspace(name, options);
   };
@@ -358,6 +347,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     // const providerName = fieldValues.providerName ? fieldValues.providerName : 'null';
 
     const vlResultPayload = {
+      uuid,
       encounterId,
       // routineVl: fieldValues.reasonForVlTest === 'Targeted' ? 'null' : fieldValues.routineVLtest,
       // targeted: fieldValues.reasonForVlTest === 'Routine' ? 'null' : fieldValues.targetedVLtest,
@@ -420,7 +410,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     return await saveEncounter(new AbortController(), payload, uuid); // Use saveEncounter for updating
   };
 
-
   const sampleDate = watch('dateOfSampleCollectionDate');
   const sentDate = watch('dateOfSpecimenSent'); // Dynamically watch the sent date
   const requestDate = watch('reqDate');
@@ -467,9 +456,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                           value={value}
                           labelText={
                             <>
-                              <span className={styles.label}>
-                                {t('providerName', 'Name of Requester:')}
-                              </span>
+                              <span className={styles.label}>{t('providerName', 'Name of Requester:')}</span>
                             </>
                           }
                           //labelText="Name of Requester:"
@@ -488,39 +475,37 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                       name="providerTelephoneNumber"
                       control={control}
                       rules={{
-                        validate: value => {
+                        validate: (value) => {
                           if (!value) return true;
 
                           // Starts with +
-                          if (value.startsWith("+")) {
+                          if (value.startsWith('+')) {
                             if (!/^\+\d+$/.test(value)) {
-                              return "Only numbers allowed after +";
+                              return 'Only numbers allowed after +';
                             }
                             if (value.length !== 13) {
-                              return "Phone number with + must be exactly 13 characters";
+                              return 'Phone number with + must be exactly 13 characters';
                             }
                             return true;
                           }
 
                           // No +
                           if (!/^\d+$/.test(value) && value !== '') {
-                            return "Only numbers allowed";
+                            return 'Only numbers allowed';
                           }
                           if (value.length > 10) {
-                            return "Phone number must be less than 10 digits";
+                            return 'Phone number must be less than 10 digits';
                           }
 
                           return true;
-                        }
+                        },
                       }}
                       render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
                         <TextInput
                           id="providerTelephoneNumber"
-                          value={value ?? ""}
+                          value={value ?? ''}
                           labelText={
-                            <span className={styles.label}>
-                              {t('providerTelephoneNumber', 'Mobile Phone Number:')}
-                            </span>
+                            <span className={styles.label}>{t('providerTelephoneNumber', 'Mobile Phone Number:')}</span>
                           }
                           placeholder="Phone Number"
                           invalid={!!fieldState.error}
@@ -540,7 +525,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                     />
                   </ResponsiveWrapper>
                 </section>
-
               </div>
             </AccordionItem>
             <AccordionItem title="REASON FOR TEST" open className={styles.formContainer}>
@@ -548,8 +532,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                 name="reasonForVlTest"
                 control={control}
                 rules={{
-                  validate: value =>
-                    value ? true : 'Reason for VL test is required',
+                  validate: (value) => (value ? true : 'Reason for VL test is required'),
                 }}
                 render={({ field, fieldState }) => (
                   <RadioButtonGroup
@@ -642,36 +625,34 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               <Controller
                 name="dateOfSampleCollectionDate"
                 control={control}
-                rules={{ required: 'Date specimen collected is required' }} 
+                rules={{ required: 'Date specimen collected is required' }}
                 render={({ field, fieldState }) => (
-                    <OpenmrsDatePicker
-                      id="dateOfSampleCollectionDate"
-                      labelText={
-                        <span className={styles.label}>
-                          {t('dateOfSampleCollectionDate', 'Date Specimen Collected:')}
-                          <span className={styles.required}>*</span>
-                        </span>
-                      }
-                      value={field.value ? new Date(field.value) : null}
-                      minDate={requestDate}
-                      maxDate={sentDate || today}
-                      onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                      invalid={!!fieldState.error}
-                      invalidText={fieldState.error?.message}
-                    />
-                  )}                
+                  <OpenmrsDatePicker
+                    id="dateOfSampleCollectionDate"
+                    labelText={
+                      <span className={styles.label}>
+                        {t('dateOfSampleCollectionDate', 'Date Specimen Collected:')}
+                        <span className={styles.required}>*</span>
+                      </span>
+                    }
+                    value={field.value ? new Date(field.value) : null}
+                    minDate={requestDate}
+                    maxDate={sentDate || today}
+                    onChange={(date) => onDateChange(date, 'dateOfSampleCollectionDate')}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    invalid={!!fieldState.error}
+                    invalidText={fieldState.error?.message}
+                  />
+                )}
               />
               <section className={styles.formGroup}>
                 <ResponsiveWrapper>
-
                   <Controller
                     name="specimenType"
                     control={control}
                     rules={{
-                      validate: value =>
-                        value ? true : 'Specimen type is required',
+                      validate: (value) => (value ? true : 'Specimen type is required'),
                     }}
                     render={({ field, fieldState }) => (
                       <>
@@ -691,7 +672,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                           invalidText={fieldState.error?.message}
                           onChange={(value) => field.onChange(value)}
                         >
-
                           {Object.entries(specimenTypeDisplayMap).map(([key, label]) => (
                             <RadioButton key={key} id={key} labelText={label} value={key} />
                           ))}
@@ -706,26 +686,26 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                   <Controller
                     name="dateOfSpecimenSent"
                     control={control}
-                    rules={{ required: 'Date specimen sent is required' }} 
+                    rules={{ required: 'Date specimen sent is required' }}
                     render={({ field, fieldState }) => (
-                    <OpenmrsDatePicker
-                      id="dateOfSpecimenSent"
-                      labelText={
-                        <span className={styles.label}>
-                          {t('dateOfSpecimenSent', 'Date Specimen sent to Testing Laboratory:')}
-                          <span className={styles.required}>*</span>
-                        </span>
-                      }
-                      value={field.value ? new Date(field.value) : null}
-                      minDate={sampleDate || requestDate} // Min date is the sample collection date or null if not set
-                      maxDate={today}
-                      onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                      invalid={!!fieldState.error}
-                      invalidText={fieldState.error?.message}
-                    />
-                  )}                   
+                      <OpenmrsDatePicker
+                        id="dateOfSpecimenSent"
+                        labelText={
+                          <span className={styles.label}>
+                            {t('dateOfSpecimenSent', 'Date Specimen sent to Testing Laboratory:')}
+                            <span className={styles.required}>*</span>
+                          </span>
+                        }
+                        value={field.value ? new Date(field.value) : null}
+                        minDate={sampleDate || requestDate} // Min date is the sample collection date or null if not set
+                        maxDate={today}
+                        onChange={(date) => onDateChange(date, 'dateOfSpecimenSent')}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        invalid={!!fieldState.error}
+                        invalidText={fieldState.error?.message}
+                      />
+                    )}
                     // render={({ field: { onChange, value, ref, onBlur }, fieldState }) => {
                     //   //const sampleDate = watch('dateOfSampleCollectionDate'); // Dynamically watch the collection date
                     //   //const requestDate = watch('reqDate');
@@ -789,7 +769,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                 {/* {encounter ? t('saveAndClose', 'Complete Order') : t('saveAndClose', 'Save and close')} */}
               </Button>
             </ButtonSet>
-
           </Accordion>
         </Stack>
       </div>
