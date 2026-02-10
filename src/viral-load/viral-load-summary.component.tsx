@@ -164,6 +164,10 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     { key: 'orderStatus', header: 'Order Status' },
   ];
 
+  const hasIncompleteResult = useMemo(() => {
+    return vlRequestOrders?.some((order) => !order.resultStatus);
+  }, [vlRequestOrders]);
+
   const tableRows = useMemo(() => {
     return vlRequestOrders
       ? vlRequestOrders.map((item, index) => ({
@@ -249,7 +253,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     <div className={styles.widgetCard}>
       <CardHeader title={headerTitle}>
         {isValidating && <InlineLoading />}
-        {hasFollowupRecord && (
+        {hasFollowupRecord && !hasIncompleteResult && (
           <Button
             kind="ghost"
             renderIcon={(props) => <Add size={16} {...props} />}

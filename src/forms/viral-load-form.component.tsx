@@ -185,7 +185,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     specimenType = '',
     orderStatus = '',
     exchangeStatus = '',
-    uuid = '',
+    uuid = null,
     encounterId = 0,
     id = '',
     requestedDate = '',
@@ -761,8 +761,10 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
               >
                 {isSubmitting ? (
                   <InlineLoading />
-                ) : encounter ? (
+                ) : encounter && orderStatus !== 'COMPLETE' ? (
                   t('saveAndClose', 'Complete Order')
+                ) : !uuid ? (
+                  t('saveAndClose', 'Save Order')
                 ) : (
                   t('saveAndClose', 'Update Order')
                 )}
