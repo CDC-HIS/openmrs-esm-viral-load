@@ -161,6 +161,7 @@ export async function fetchVlTestRequestResult(patientUuid: string) {
 
     // Return all details as they are
     return details.map((detail: any) => ({
+      vlTestRequestResultId: detail.vlTestRequestResultId,
       uuid: detail.uuid,
       patientUUID: detail.patientUUID,
       encounterId: detail.encounterId,
