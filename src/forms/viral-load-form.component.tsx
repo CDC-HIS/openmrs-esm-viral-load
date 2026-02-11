@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { TFunction } from 'react-i18next';
 import { useTranslation } from 'react-i18next';
 import styles from './lab-order-form.scss';
@@ -45,6 +45,17 @@ type FormInputs = Record<
   string
 >;
 
+type RoutineOptionContext = {
+  isPregnant: boolean;
+  isBreastfeeding: boolean;
+};
+
+type RoutineTestOption = {
+  concept: string;
+  label: string;
+  show?: (ctx: RoutineOptionContext) => boolean;
+};
+
 type EncounterType = {
   specimenType?: string;
   orderStatus?: string;
@@ -59,6 +70,8 @@ type EncounterType = {
   requestedBy?: string;
   targeted?: string;
   routineVl?: string;
+  pregnancy?: string;
+  breastFeeding?: string;
 };
 
 interface ViralLoadFormProps {
@@ -106,71 +119,61 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     },
   ];
 
-  const routineTestOpt = [
-    {
-      concept: 'd1977f43-83a5-4b32-b589-33b9315e912d',
-      label: 'First viral load test at 3 months or longer post ART',
-      hide: {
-        hideWhenExpression: "pregnant !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+  const routineTestOpt: RoutineTestOption[] = useMemo(
+    () => [
+      {
+        concept: 'd1977f43-83a5-4b32-b589-33b9315e912d',
+        label: 'First viral load test at 3 months or longer post ART',
+        show: ({ isPregnant }) => isPregnant,
       },
-    },
-    {
-      concept: 'b450f8e7-f55e-4788-8fb4-de5229db1b10',
-      label: 'First viral load test at 6 months or longer post ART',
-    },
-    {
-      concept: 'c616b09a-bcc2-49a9-b47c-7219f7695e91',
-      label: 'Second viral load test at 12 months post ART',
-    },
-    {
-      concept: '42a61e3f-e3e9-46a8-96e3-8643f4d476a4',
-      label: 'Annual viral load test',
-    },
-    {
-      concept: '89e9a9ee-15d1-424b-be5a-0765822cd35e',
-      label: 'At the first antenatal care visit',
-      hide: {
-        hideWhenExpression: "pregnant !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      {
+        concept: 'b450f8e7-f55e-4788-8fb4-de5229db1b10',
+        label: 'First viral load test at 6 months or longer post ART',
       },
-    },
-    {
-      concept: 'c1f8f2f6-ec39-422b-a305-58ccafec86c3',
-      label: 'At 34-36 weeks of gestation',
-      hide: {
-        hideWhenExpression: "pregnant !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      {
+        concept: 'c616b09a-bcc2-49a9-b47c-7219f7695e91',
+        label: 'Second viral load test at 12 months post ART',
       },
-    },
-    {
-      concept: '603faef3-2142-4ee7-8781-aa977ada17a2',
-      label: 'Three months after delivery',
-      hide: {
-        hideWhenExpression: "breastfeeding !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      {
+        concept: '42a61e3f-e3e9-46a8-96e3-8643f4d476a4',
+        label: 'Annual viral load test',
       },
-    },
-    {
-      concept: 'd3d6d8e3-0438-4f83-ba9f-ac46eed6782b',
-      label: 'Six months after the first viral load test at postnatal period',
-      hide: {
-        hideWhenExpression: "breastfeeding !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      {
+        concept: '89e9a9ee-15d1-424b-be5a-0765822cd35e',
+        label: 'At the first antenatal care visit',
+        show: ({ isPregnant }) => isPregnant,
       },
-    },
-    {
-      concept: 'd18e5f76-5026-45d1-be18-f14ae936c692',
-      label: 'Every six months until MTCT ends',
-      hide: {
-        hideWhenExpression: "breastfeeding !== '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+      {
+        concept: 'c1f8f2f6-ec39-422b-a305-58ccafec86c3',
+        label: 'At 34-36 weeks of gestation',
+        show: ({ isPregnant }) => isPregnant,
       },
-    },
-    {
-      concept: '9dbe8de0-c0ca-4bb0-ac46-207dd5ee5caf',
-      label:
-        'Viral load after EAC: repeat viral load where initial viral load greater than 50 and less than 1000 copies per ml',
-    },
-    {
-      concept: '4afb4baf-14c0-498b-b908-06b33e50476e',
-      label: 'Viral load after EAC: confirmatory viral load where initial viral load greater than 1000 copies per ml',
-    },
-  ];
+      {
+        concept: '603faef3-2142-4ee7-8781-aa977ada17a2',
+        label: 'Three months after delivery',
+        show: ({ isBreastfeeding }) => isBreastfeeding,
+      },
+      {
+        concept: 'd3d6d8e3-0438-4f83-ba9f-ac46eed6782b',
+        label: 'Six months after the first viral load test at postnatal period',
+        show: ({ isBreastfeeding }) => isBreastfeeding,
+      },
+      {
+        concept: 'd18e5f76-5026-45d1-be18-f14ae936c692',
+        label: 'Every six months until MTCT ends',
+        show: ({ isBreastfeeding }) => isBreastfeeding,
+      },
+      {
+        concept: '9dbe8de0-c0ca-4bb0-ac46-207dd5ee5caf',
+        label: 'VL after EAC: repeat VL where initial VL >50 and <1000 copies/ml',
+      },
+      {
+        concept: '4afb4baf-14c0-498b-b908-06b33e50476e',
+        label: 'VL after EAC: confirmatory VL where initial VL >1000 copies/ml',
+      },
+    ],
+    [], // ← stable forever
+  );
 
   // For saving to DB
   const specimenTypeSaveMap = {
@@ -195,6 +198,8 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     requestedBy = '',
     targeted = '',
     routineVl = '',
+    pregnancy = '',
+    breastFeeding = '',
   } = encounter || {};
   const isSaveDisabled = exchangeStatus === 'SENT' || exchangeStatus === 'RECEIVED';
 
@@ -204,6 +209,16 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
   //     dateOfSpecimenSent: null,
   //   },
   // });
+  const isPregnant = encounter?.pregnancy?.toLowerCase() === 'yes';
+  const isBreastfeeding = encounter?.breastFeeding?.toLowerCase() === 'yes';
+
+  const filteredRoutineOptions = useMemo(() => {
+    return routineTestOpt.filter((opt) => {
+      if (!opt.show) return true;
+
+      return opt.show({ isPregnant, isBreastfeeding });
+    });
+  }, [routineTestOpt, isPregnant, isBreastfeeding]);
 
   // Fetch patient encounters
   const { vlRequestOrders, isError, isLoading: isLoadingVLRequests, mutate } = useVLRequestOrders(patientUuid);
@@ -578,7 +593,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
                             onChange={(e) => field.onChange(e.target.value)}
                           >
                             <SelectItem value="" text="Select" className={styles.customSelect} />
-                            {routineTestOpt.map((opt) => (
+                            {filteredRoutineOptions.map((opt) => (
                               <SelectItem key={opt.concept} value={opt.concept} text={opt.label} />
                             ))}
                           </Select>
