@@ -128,6 +128,21 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
   const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);
 
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const { latestMatched: hasEntryInformation, cacheKey: entryInformationKey } = useLatestObs(
     patientUuid,
     '5c118396-52dc-4cac-8860-e6d8e4a7f296',
@@ -168,71 +183,118 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     return vlRequestOrders?.some((order) => !order.resultStatus);
   }, [vlRequestOrders]);
 
+  // const tableRows = useMemo(() => {
+  //   return vlRequestOrders
+  //     ? vlRequestOrders.map((item, index) => ({
+  //         id: item.uuid || index,
+  //         followUpDate: item.followUpDate
+  //           ? formatDate(parseDate(item.followUpDate), { mode: 'wide', time: false, noToday: true })
+  //           : null,
+  //         encounterId: item.encounterId,
+  //         requestedDate: item.requestedDate
+  //           ? formatDate(parseDate(item.requestedDate), { mode: 'wide', time: false, noToday: true })
+  //           : null,
+  //         regimen: item.regimen || null,
+  //         //reason: item.routineVl || item.targeted || null,
+  //         reason: item.routineVl
+  //           ? routineMap[item.routineVl] || item.routineVl
+  //           : item.targeted
+  //           ? targetedMap[item.targeted] || item.targeted
+  //           : null,
+  //         specimenCollectedDate: item.specimenCollectedDate
+  //           ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
+  //           : null,
+  //         specimenType: item.specimenType || null,
+  //         orderStatus: item.orderStatus || null,
+  //         testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide' }) : '--',
+  //         testResult: item.testResult || '--',
+  //         testedBy: item.testedBy || '--',
+  //         resultStatus: item.resultStatus || '--',
+
+  //         reqDate: item.requestedDate,
+  //         specimenCollectedDateGC: item.specimenCollectedDate || null,
+  //         providerPhoneNo: item.providerPhoneNo || null,
+  //         specimenSentToReferralDateGC: item.specimenSentToReferralDate || null,
+  //         requestedBy: item.requestedBy || null,
+
+  //         resultDate: item.testResultDate,
+  //         reviewedBy: item.reviewedBy,
+  //         aletSentDate: item.aletSentDate,
+  //         dispatchedDate: item.dispatchedDate,
+  //         labId: item.labId,
+  //         labName: item.labName,
+  //         specimenReceivedDate: item.specimenReceivedDate,
+  //         reasonQuality: item.reason,
+  //         instrumentUsed: item.instrumentUsed,
+  //         temperatureOnArrival: item.temperatureOnArrival,
+  //         resultReachedToFacDate: item.resultReachedToFacDate,
+  //         resultReceivedByFacility: item.resultReceivedByFacility,
+  //       }))
+  //     : [];
+  // }, [vlRequestOrders]);
   const tableRows = useMemo(() => {
-    return vlRequestOrders
-      ? vlRequestOrders.map((item, index) => ({
-          id: item.uuid || index,
-          followUpDate: item.followUpDate
-            ? formatDate(parseDate(item.followUpDate), { mode: 'wide', time: false, noToday: true })
-            : null,
-          encounterId: item.encounterId,
-          requestedDate: item.requestedDate
-            ? formatDate(parseDate(item.requestedDate), { mode: 'wide', time: false, noToday: true })
-            : null,
-          regimen: item.regimen || null,
-          //reason: item.routineVl || item.targeted || null,
-          reason: item.routineVl
-            ? routineMap[item.routineVl] || item.routineVl
-            : item.targeted
-            ? targetedMap[item.targeted] || item.targeted
-            : null,
-          specimenCollectedDate: item.specimenCollectedDate
-            ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
-            : null,
-          specimenType: item.specimenType || null,
-          orderStatus: item.orderStatus || null,
-          testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide' }) : '--',
-          testResult: item.testResult || '--',
-          testedBy: item.testedBy || '--',
-          resultStatus: item.resultStatus || '--',
+    if (!vlRequestOrders) return [];
 
-          reqDate: item.requestedDate,
-          specimenCollectedDateGC: item.specimenCollectedDate || null,
-          providerPhoneNo: item.providerPhoneNo || null,
-          specimenSentToReferralDateGC: item.specimenSentToReferralDate || null,
-          requestedBy: item.requestedBy || null,
+    return [...vlRequestOrders]
+      .sort((a, b) => {
+        const dateA = new Date(a.requestedDate ?? 0).getTime();
+        const dateB = new Date(b.requestedDate ?? 0).getTime();
 
-          resultDate: item.testResultDate,
-          reviewedBy: item.reviewedBy,
-          aletSentDate: item.aletSentDate,
-          dispatchedDate: item.dispatchedDate,
-          labId: item.labId,
-          labName: item.labName,
-          specimenReceivedDate: item.specimenReceivedDate,
-          reasonQuality: item.reason,
-          instrumentUsed: item.instrumentUsed,
-          temperatureOnArrival: item.temperatureOnArrival,
-          resultReachedToFacDate: item.resultReachedToFacDate,
-          resultReceivedByFacility: item.resultReceivedByFacility,
-        }))
-      : [];
+        return dateB - dateA; // 🔥 Latest requested first
+      })
+      .map((item, index) => ({
+        id: item.uuid || index,
+
+        followUpDate: item.followUpDate
+          ? formatDate(parseDate(item.followUpDate), { mode: 'wide', time: false, noToday: true })
+          : null,
+
+        requestedDate: item.requestedDate
+          ? formatDate(parseDate(item.requestedDate), { mode: 'wide', time: false, noToday: true })
+          : null,
+
+        regimen: item.regimen || null,
+        reason: item.routineVl
+          ? routineMap[item.routineVl] || item.routineVl
+          : item.targeted
+          ? targetedMap[item.targeted] || item.targeted
+          : null,
+
+        specimenCollectedDate: item.specimenCollectedDate
+          ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
+          : null,
+
+        specimenType: item.specimenType || null,
+        orderStatus: item.orderStatus || null,
+
+        testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide' }) : '--',
+        testResult: item.testResult || '--',
+        testedBy: item.testedBy || '--',
+        resultStatus: item.resultStatus || '--',
+
+        // keep raw values if needed later
+        reqDate: item.requestedDate,
+        resultDate: item.testResultDate,
+      }));
   }, [vlRequestOrders]);
 
-  const sortedRows = useMemo(() => {
-    return tableRows.sort((b, a) => {
-      const dateA = new Date(a.followUpDate).getTime();
-      const dateB = new Date(b.followUpDate).getTime();
-      return dateA - dateB;
-    });
-  }, [tableRows]);
+  // const sortedRows = useMemo(() => {
+  //   return tableRows.sort((a, b) => {
+  //     const dateA = new Date(a.followUpDate).getTime();
+  //     const dateB = new Date(b.followUpDate).getTime();
+  //     return dateA - dateB;
+  //   });
+  // }, [tableRows]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 10;
-  const totalRows = sortedRows.length;
+  //const totalRows = sortedRows.length;
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = sortedRows.slice(indexOfFirstRow, indexOfLastRow);
+  //const currentRows = sortedRows.slice(indexOfFirstRow, indexOfLastRow);
+  const totalRows = tableRows.length;
+  const currentRows = tableRows.slice(indexOfFirstRow, indexOfLastRow);
 
   const handleFilter = ({ rowIds, headers, cellsById, inputValue, getCellId }) => {
     return rowIds.filter((rowId) =>
@@ -251,7 +313,12 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
   return (
     <div className={styles.widgetCard}>
+      {/* <CardHeader title={headerTitle}> */}
       <CardHeader title={headerTitle}>
+        <span className={`${styles.connectionBadge} ${isOnline ? styles.connected : styles.disconnected}`}>
+          {isOnline ? 'Connected' : 'Disconnected'}
+        </span>
+
         {isValidating && <InlineLoading />}
         {hasFollowupRecord && !hasIncompleteResult && (
           <Button

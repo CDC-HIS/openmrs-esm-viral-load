@@ -9,3 +9,31 @@
 .header {
   background-color: #e0e0e0 !important;
 }
+
+.connectionBadge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  position: absolute;
+  left: 15%;
+  transform: translateX(-50%);
+}
+
+.connected {
+  background-color: #d4f4dd;
+  color: #1b5e20;
+}
+
+.disconnected {
+  background-color: #fde2e2;
+  color: #b71c1c;
+}
+
+.centerBadgeWrapper {
+  position: absolute;
+  left: 30%;
+  transform: translateX(-50%);
+}
+
+

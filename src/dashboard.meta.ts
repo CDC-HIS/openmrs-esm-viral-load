@@ -1,6 +1,6 @@
 export const dashboardMeta = {
   slot: 'ettors-dashboard-slot',
   columns: 1,
-  path: 'ettors',
+  path: 'etorrs',
   title: 'Viral Load',
 };

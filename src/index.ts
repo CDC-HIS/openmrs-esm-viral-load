@@ -8,7 +8,7 @@ import EttorsCurrent from './viral-load/viral-load-current.component';
 const moduleName = '@openmrs/esm-ethio-ettors';
 
 const options = {
-  featureName: 'ettors',
+  featureName: 'etorrs',
   moduleName,
 };
 

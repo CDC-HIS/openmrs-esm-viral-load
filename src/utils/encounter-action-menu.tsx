@@ -134,7 +134,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
           onClick={launchAddVLResultForm}
           //itemText={t('edit', 'Add result')}
           itemText={
-            encounter.resultStatus === 'MANUAL_ETTORS'
+            encounter.resultStatus === 'MANUAL_ETORRS'
               ? t('editResult', 'Edit Result')
               : encounter.resultStatus === '--'
               ? t('editResult', 'Add Result')

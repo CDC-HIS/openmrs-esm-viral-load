@@ -121,8 +121,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     orderStatus,
     specimenSentToReferralDate,
   } = encounter;
-  const isSaveDisabled = resultStatus == 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
-  const editResult = resultStatus === 'MANUAL_ETTORS';
+  const isSaveDisabled = resultStatus == 'ETORRS' || resultStatus === 'MANUAL_FOLLOWUP';
+  const editResult = resultStatus === 'MANUAL_ETORRS';
   // const isRequestSent = exchangeStatus === 'SENT';
   // const isRequestComplete = orderStatus === 'INCOMPLETE';
 
@@ -328,7 +328,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       temperatureOnArrival: fieldValues.tempratureOnArrival || null,
       resultReachedToFacDate: fieldValues.resultReceivedDate || null,
       resultReceivedByFacility: fieldValues.resultReceivedBy || null,
-      resultStatus: 'MANUAL_ETTORS',
+      resultStatus: 'MANUAL_ETORRS',
     };
     const apiPayload = {
       ...vlResultPayload,
@@ -641,13 +641,16 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                       control={control}
                       name="viralLoadCount"
                       rules={{
-                        //required: 'Test result is required', // Optional: Customize this validation message
                         required: watchSpecimenQuality !== 'Unacceptable' ? 'Test result is required' : false,
                         validate: (value) => {
-                          // Ensure the value is a non-negative integer
-                          return Number.isInteger(Number(value)) && Number(value) >= 0
-                            ? true
-                            : 'Please enter a valid number (0 or greater, no fractions)';
+                          if (value === '' || value === null || value === undefined) return true;
+
+                          const num = Number(value);
+
+                          if (num === -1) return true;
+                          if (Number.isInteger(num) && num >= 0) return true;
+
+                          return 'Enter a whole number ≥ 0, or -1 for "Not detected"';
                         },
                       }}
                       render={({ field, fieldState: { error } }) => (
