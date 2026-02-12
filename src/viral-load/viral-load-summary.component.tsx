@@ -109,7 +109,6 @@ const routineTestOpt = [
     label: 'Viral load after EAC: confirmatory viral load where initial viral load greater than 1000 copies per ml',
   },
 ];
-
 const targetedMap = Object.fromEntries(targetedOpt.map((o) => [o.concept, o.label]));
 
 const routineMap = Object.fromEntries(routineTestOpt.map((o) => [o.concept, o.label]));
@@ -176,7 +175,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     { key: 'reason', header: 'Reason for test' },
     { key: 'specimenCollectedDate', header: 'Date specimen collected' },
     { key: 'specimenType', header: 'Specimen type' },
-    { key: 'orderStatus', header: 'Order Status' },
+    { key: 'orderStatus', header: 'Status' },
   ];
 
   const hasIncompleteResult = useMemo(() => {
@@ -232,6 +231,26 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   //       }))
   //     : [];
   // }, [vlRequestOrders]);
+
+  const getDisplayOrderStatus = (orderStatus?: string, exchangeStatus?: string) => {
+    if (orderStatus === 'INCOMPLETE') {
+      return { label: 'Incomplete', type: 'danger' }; // Red
+    }
+    if (orderStatus === 'COMPLETE' && exchangeStatus === null) {
+      return { label: 'Pending', type: 'warning' }; // Red
+    }
+
+    if (exchangeStatus === 'CATCHED') {
+      return { label: 'Pending', type: 'warning' }; // Orange
+    }
+
+    if (exchangeStatus === 'SENT' || exchangeStatus === 'RECEIVED') {
+      return { label: 'Sent', type: 'success' }; // Green
+    }
+
+    return { label: orderStatus || '--', color: '#525252' }; // Default gray
+  };
+
   const tableRows = useMemo(() => {
     if (!vlRequestOrders) return [];
 
@@ -265,7 +284,8 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
           : null,
 
         specimenType: item.specimenType || null,
-        orderStatus: item.orderStatus || null,
+        //orderStatus: item.orderStatus || null,
+        orderStatus: getDisplayOrderStatus(item.orderStatus, item.exchangeStatus),
 
         testResultDate: item.testResultDate
           ? formatDate(parseDate(item.testResultDate), { mode: 'wide', time: false, noToday: true })
@@ -316,12 +336,16 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
   return (
     <div className={styles.widgetCard}>
+      {!hasFollowupRecord && (
+        <div className={styles.followupWarning}>
+          ⚠️ Please register a Follow-Up for this client before sending VL request.
+        </div>
+      )}
       {/* <CardHeader title={headerTitle}> */}
       <CardHeader title={headerTitle}>
         <span className={`${styles.connectionBadge} ${isOnline ? styles.connected : styles.disconnected}`}>
           {isOnline ? 'Connected' : 'Disconnected'}
         </span>
-
         {isValidating && <InlineLoading />}
         {hasFollowupRecord && !hasIncompleteResult && (
           <Button
@@ -376,7 +400,16 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                         <React.Fragment key={row.id}>
                           <TableExpandRow className={styles.row} {...getRowProps({ row })}>
                             {row.cells.map((cell) => (
-                              <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
+                              // <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
+                              <TableCell key={cell.id}>
+                                {cell.info.header === 'orderStatus' && typeof cell.value === 'object' ? (
+                                  <span className={`${styles.statusBadge} ${styles[cell.value.type]}`}>
+                                    {cell.value.label}
+                                  </span>
+                                ) : (
+                                  cell.value?.content ?? cell.value
+                                )}
+                              </TableCell>
                             ))}
                             <TableCell>
                               <EncounterActionMenu
