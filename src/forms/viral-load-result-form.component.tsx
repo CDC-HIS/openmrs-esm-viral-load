@@ -71,7 +71,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   //const { control, handleSubmit, setValue, watch } = useForm<ResultFormInputs>();
-  const { control, handleSubmit, setValue, watch, clearErrors, trigger } = useForm<ResultFormInputs>({
+  const { control, handleSubmit, setValue, watch, clearErrors, trigger, resetField } = useForm<ResultFormInputs>({
     mode: 'onChange', // 🔥 important so errors clear when value changes
   });
   const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
@@ -121,8 +121,8 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
     orderStatus,
     specimenSentToReferralDate,
   } = encounter;
-  const isSaveDisabled = resultStatus == 'ETORRS' || resultStatus === 'MANUAL_FOLLOWUP';
-  const editResult = resultStatus === 'MANUAL_ETORRS';
+  const isSaveDisabled = resultStatus == 'ETTORS' || resultStatus === 'MANUAL_FOLLOWUP';
+  const editResult = resultStatus === 'MANUAL_ETTORS';
   // const isRequestSent = exchangeStatus === 'SENT';
   // const isRequestComplete = orderStatus === 'INCOMPLETE';
 
@@ -328,7 +328,7 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
       temperatureOnArrival: fieldValues.tempratureOnArrival || null,
       resultReachedToFacDate: fieldValues.resultReceivedDate || null,
       resultReceivedByFacility: fieldValues.resultReceivedBy || null,
-      resultStatus: 'MANUAL_ETORRS',
+      resultStatus: 'MANUAL_ETTORS',
     };
     const apiPayload = {
       ...vlResultPayload,
@@ -370,6 +370,29 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
   };
 
   const watchSpecimenQuality = watch('specimenQuality');
+
+  useEffect(() => {
+    if (watchSpecimenQuality === 'Unacceptable') {
+      // Clear ALL test result related fields
+      resetField('testDate');
+      resetField('viralLoadCount');
+      resetField('testedBy');
+      resetField('reviewedBy');
+      resetField('panicAlertSent');
+      resetField('dispatchDate');
+      resetField('tempratureOnArrival');
+      resetField('resultReceivedDate');
+      resetField('resultReceivedBy');
+      resetField('instrumentUsed');
+    }
+  }, [watchSpecimenQuality, resetField]);
+
+  useEffect(() => {
+    if (watchSpecimenQuality === 'Acceptable') {
+      // Clear ALL test result related fields
+      resetField('reason');
+    }
+  }, [watchSpecimenQuality, resetField]);
 
   return (
     <Form onSubmit={handleSubmit(handleFormSubmit)} data-testid="viral-load-result-form" className={styles.formNew}>
@@ -789,30 +812,6 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     />
                   </ResponsiveWrapper>
                 </section>
-
-                {/* <section className={styles.formGroup}>
-          <ResponsiveWrapper>
-          <Controller
-      //key={reaction.uuid}
-      name="instrumentUsed"
-      control={control}
-      defaultValue=""
-      render={({ field: { onBlur, onChange, value } }) => (
-        <Checkbox
-          //className={styles.checkbox}
-          labelText="Instrument Used"
-          id="instrumentUsed"
-          // onChange={(event, { checked, id }) => {
-          //   handleAllergicReactionChange(onChange, checked, id, index);
-          // }}
-          checked={Boolean(value)}
-          onBlur={onBlur}
-        />
-      )}
-    />
-          </ResponsiveWrapper>
-        </section> */}
-
                 <section className={styles.formGroup}>
                   <ResponsiveWrapper>
                     <Controller

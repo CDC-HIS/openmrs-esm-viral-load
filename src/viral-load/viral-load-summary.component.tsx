@@ -261,16 +261,19 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
           : null,
 
         specimenCollectedDate: item.specimenCollectedDate
-          ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
+          ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide', time: false, noToday: true })
           : null,
 
         specimenType: item.specimenType || null,
         orderStatus: item.orderStatus || null,
 
-        testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide' }) : '--',
+        testResultDate: item.testResultDate
+          ? formatDate(parseDate(item.testResultDate), { mode: 'wide', time: false, noToday: true })
+          : '--',
         testResult: item.testResult || '--',
         testedBy: item.testedBy || '--',
-        resultStatus: item.resultStatus || '--',
+        resultStatus:
+          item.resultStatus === 'ETTORS' ? 'ETORRS' : item.resultStatus === 'MANUAL_ETTORS' ? 'MANUAL_ETORRS' : '--',
 
         // keep raw values if needed later
         reqDate: item.requestedDate,
