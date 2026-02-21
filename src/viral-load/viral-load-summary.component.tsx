@@ -25,6 +25,7 @@ import { TableExpandRow, TableExpandedRow } from '@carbon/react';
 import debounce from 'lodash.debounce';
 import { fetchPatientData, fetchVlTestRequestResult, useLatestObs } from '../api/api';
 import { config } from 'dotenv';
+import { Tag } from '@carbon/react';
 
 interface HivCareAndTreatmentProps {
   patientUuid: string;
@@ -232,23 +233,56 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   //     : [];
   // }, [vlRequestOrders]);
 
-  const getDisplayOrderStatus = (orderStatus?: string, exchangeStatus?: string) => {
+  const getDisplayOrderStatus = (orderStatus?: string, exchangeStatus?: string, resultStatus?: string) => {
     if (orderStatus === 'INCOMPLETE') {
-      return { label: 'Incomplete', type: 'danger' }; // Red
+      return { label: 'Incomplete', type: 'warning' }; // Red
     }
     if (orderStatus === 'COMPLETE' && exchangeStatus === null) {
-      return { label: 'Pending', type: 'warning' }; // Red
+      return { label: 'Pending', type: 'warning' }; // Orange
     }
 
     if (exchangeStatus === 'CATCHED') {
       return { label: 'Pending', type: 'warning' }; // Orange
     }
 
-    if (exchangeStatus === 'SENT' || exchangeStatus === 'RECEIVED') {
+    if (exchangeStatus === 'SENT' || (exchangeStatus === 'RECEIVED' && resultStatus === 'ETTORS')) {
       return { label: 'Sent', type: 'success' }; // Green
     }
 
+    if (exchangeStatus === 'FAILED') {
+      return { label: 'Failed', type: 'danger' }; // Red
+    }
+
+    if (exchangeStatus === 'RECEIVED' && (resultStatus === 'MANUAL_FOLLOWUP' || resultStatus === 'MANUAL_ETTORS')) {
+      return { label: 'COMPLETE', type: 'warning' }; // Green
+    }
+
     return { label: orderStatus || '--', color: '#525252' }; // Default gray
+  };
+
+  const renderResultStatus = (status?: string, exchangeStatus?: string) => {
+    if (!status) {
+      return <Tag type="cool-gray">--</Tag>;
+    }
+
+    // 🔴 Failed + Manual conditions
+    if (exchangeStatus === 'FAILED' && (status === 'MANUAL_ETTORS' || status === 'MANUAL_FOLLOWUP')) {
+      return <Tag type="red">Managed Manually 2</Tag>;
+    }
+
+    switch (status) {
+      case 'ETTORS':
+        return <Tag type="green">Received through ETORRS</Tag>;
+
+      case 'MANUAL_FOLLOWUP':
+        return <Tag type="magenta">Managed Manually 1</Tag>;
+
+      case 'MANUAL_ETTORS':
+        return <Tag type="magenta">Managed Manually 1</Tag>;
+
+      default:
+        return <Tag type="cool-gray">--</Tag>;
+    }
   };
 
   const tableRows = useMemo(() => {
@@ -285,15 +319,17 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
         specimenType: item.specimenType || null,
         //orderStatus: item.orderStatus || null,
-        orderStatus: getDisplayOrderStatus(item.orderStatus, item.exchangeStatus),
+        orderStatus: getDisplayOrderStatus(item.orderStatus, item.exchangeStatus, item.resultStatus),
 
         testResultDate: item.testResultDate
           ? formatDate(parseDate(item.testResultDate), { mode: 'wide', time: false, noToday: true })
           : '--',
         testResult: item.testResult || '--',
         testedBy: item.testedBy || '--',
-        resultStatus:
-          item.resultStatus === 'ETTORS' ? 'ETORRS' : item.resultStatus === 'MANUAL_ETTORS' ? 'MANUAL_ETORRS' : '--',
+        //resultStatus: renderResultStatus(item.resultStatus),
+        resultStatus: renderResultStatus(item.resultStatus, item.exchangeStatus),
+        // resultStatus:
+        //   item.resultStatus === 'ETTORS' ? 'Received through ETORRS' : item.resultStatus === 'MANUAL_ETTORS' ? 'Managed Manually 2' : item.resultStatus === 'FOLLOWUP_ETTORS' ? 'Managed Manually 1' : '--',
 
         // keep raw values if needed later
         reqDate: item.requestedDate,

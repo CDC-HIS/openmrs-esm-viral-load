@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TFunction } from 'react-i18next';
 import { useTranslation } from 'react-i18next';
 import styles from './lab-order-form.scss';
@@ -355,8 +355,47 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
     return () => subscription.unsubscribe();
   }, [watch, clearErrors]);
 
+  const [existingRequests, setExistingRequests] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadRequests = async () => {
+      const data = await fetchVlTestRequestResult(patientUuid);
+      setExistingRequests(data || []);
+    };
+
+    loadRequests();
+  }, [patientUuid]);
+
   const handleFormSubmit = async (fieldValues: FormInputs) => {
     const abortController = new AbortController();
+
+    // 🔹 Normalize new selected date
+    const newRequestedDate = dayjs(fieldValues.reqDate).format('YYYY-MM-DD');
+
+    // 🔹 Check duplicate (exclude current record when editing)
+    const isDuplicate = existingRequests.some((item) => {
+      if (!item.requestedDate) return false;
+
+      const existingDate = dayjs(item.requestedDate).format('YYYY-MM-DD');
+
+      // If editing, skip current record
+      if (vlTestRequestResultId && item.vlTestRequestResultId === vlTestRequestResultId) {
+        return false;
+      }
+
+      return existingDate === newRequestedDate;
+    });
+
+    if (isDuplicate) {
+      showSnackbar({
+        isLowContrast: false,
+        title: 'Duplicate Request Date',
+        kind: 'error',
+        subtitle: 'A Viral Load request already exists for this date.',
+      });
+
+      return false; // 🚫 STOP SAVE
+    }
 
     // const providerTelephoneNumber = fieldValues.providerTelephoneNumber ? fieldValues.providerTelephoneNumber : 'null';
     // const providerName = fieldValues.providerName ? fieldValues.providerName : 'null';
@@ -383,7 +422,6 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
     };
     delete apiPayload.patientUuid;
-    setIsSubmitting(true);
 
     try {
       // Check if we are editing an existing encounter
@@ -401,6 +439,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
         .catch((error) => {
           console.error('Failed to save:', error);
         });
+      setIsSubmitting(true);
 
       // mutate();
       // closeWorkspaceHandler('ettors-workspace');
