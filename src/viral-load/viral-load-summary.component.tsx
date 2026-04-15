@@ -102,8 +102,7 @@ const routineTestOpt = [
   },
   {
     concept: '9dbe8de0-c0ca-4bb0-ac46-207dd5ee5caf',
-    label:
-      'Viral load after EAC: repeat viral load where initial viral load greater than 50 and less than 1000 copies per ml',
+    label: 'Viral load after EAC: Repeat VL for client’s Initial VL >50 to ≤ 1000 copies/ml',
   },
   {
     concept: '4afb4baf-14c0-498b-b908-06b33e50476e',
