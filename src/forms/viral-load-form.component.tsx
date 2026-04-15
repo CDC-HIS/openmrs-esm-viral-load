@@ -165,7 +165,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       },
       {
         concept: '9dbe8de0-c0ca-4bb0-ac46-207dd5ee5caf',
-        label: 'VL after EAC: repeat VL where initial VL >50 and <1000 copies/ml',
+        label: 'VL after EAC: Repeat VL for client’s Initial VL >50 to ≤ 1000 copies/ml',
       },
       {
         concept: '4afb4baf-14c0-498b-b908-06b33e50476e',
