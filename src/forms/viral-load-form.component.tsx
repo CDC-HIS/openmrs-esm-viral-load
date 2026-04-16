@@ -124,7 +124,7 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       {
         concept: 'd1977f43-83a5-4b32-b589-33b9315e912d',
         label: 'First viral load test at 3 months or longer post ART',
-        show: ({ isPregnant }) => isPregnant,
+        //show: ({ isPregnant }) => isPregnant,
       },
       {
         concept: 'b450f8e7-f55e-4788-8fb4-de5229db1b10',
@@ -141,27 +141,27 @@ const ViralLoadForm: React.FC<ViralLoadFormProps> = ({ patientUuid, encounter })
       {
         concept: '89e9a9ee-15d1-424b-be5a-0765822cd35e',
         label: 'At the first antenatal care visit',
-        show: ({ isPregnant }) => isPregnant,
+        //show: ({ isPregnant }) => isPregnant,
       },
       {
         concept: 'c1f8f2f6-ec39-422b-a305-58ccafec86c3',
         label: 'At 34-36 weeks of gestation',
-        show: ({ isPregnant }) => isPregnant,
+        //show: ({ isPregnant }) => isPregnant,
       },
       {
         concept: '603faef3-2142-4ee7-8781-aa977ada17a2',
         label: 'Three months after delivery',
-        show: ({ isBreastfeeding }) => isBreastfeeding,
+        //show: ({ isBreastfeeding }) => isBreastfeeding,
       },
       {
         concept: 'd3d6d8e3-0438-4f83-ba9f-ac46eed6782b',
         label: 'Six months after the first viral load test at postnatal period',
-        show: ({ isBreastfeeding }) => isBreastfeeding,
+        //show: ({ isBreastfeeding }) => isBreastfeeding,
       },
       {
         concept: 'd18e5f76-5026-45d1-be18-f14ae936c692',
         label: 'Every six months until MTCT ends',
-        show: ({ isBreastfeeding }) => isBreastfeeding,
+        //show: ({ isBreastfeeding }) => isBreastfeeding,
       },
       {
         concept: '9dbe8de0-c0ca-4bb0-ac46-207dd5ee5caf',
