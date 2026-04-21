@@ -130,20 +130,24 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
   const checkStatus = useCallback(async () => {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch('ws/rest/v1/ethiohri/status', {
+    try {
+      const response = await fetch('/openmrs/ws/rest/v1/ethiohri/status', {
         method: 'GET',
         credentials: 'include',
+        signal: controller.signal, // ✅ fix
       });
 
-      clearTimeout(timeout);
+      const result = await response.text();
 
-      setIsConnected(response.ok);
+      setIsConnected(response.ok && result.trim() === 'SUCCESS');
     } catch (error) {
+      console.error('ETTORRS status check failed:', error);
       setIsConnected(false);
+    } finally {
+      clearTimeout(timeout); // ✅ always clear
     }
   }, []);
 
