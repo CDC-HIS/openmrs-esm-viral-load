@@ -127,20 +127,31 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
   const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);
 
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
+
+  const checkStatus = useCallback(async () => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('ws/rest/v1/ethiohri/status', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      clearTimeout(timeout);
+
+      setIsConnected(response.ok);
+    } catch (error) {
+      setIsConnected(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  }, [checkStatus]);
 
   const { latestMatched: hasEntryInformation, cacheKey: entryInformationKey } = useLatestObs(
     patientUuid,
@@ -181,56 +192,6 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const hasIncompleteResult = useMemo(() => {
     return vlRequestOrders?.some((order) => !order.resultStatus);
   }, [vlRequestOrders]);
-
-  // const tableRows = useMemo(() => {
-  //   return vlRequestOrders
-  //     ? vlRequestOrders.map((item, index) => ({
-  //         id: item.uuid || index,
-  //         followUpDate: item.followUpDate
-  //           ? formatDate(parseDate(item.followUpDate), { mode: 'wide', time: false, noToday: true })
-  //           : null,
-  //         encounterId: item.encounterId,
-  //         requestedDate: item.requestedDate
-  //           ? formatDate(parseDate(item.requestedDate), { mode: 'wide', time: false, noToday: true })
-  //           : null,
-  //         regimen: item.regimen || null,
-  //         //reason: item.routineVl || item.targeted || null,
-  //         reason: item.routineVl
-  //           ? routineMap[item.routineVl] || item.routineVl
-  //           : item.targeted
-  //           ? targetedMap[item.targeted] || item.targeted
-  //           : null,
-  //         specimenCollectedDate: item.specimenCollectedDate
-  //           ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide' })
-  //           : null,
-  //         specimenType: item.specimenType || null,
-  //         orderStatus: item.orderStatus || null,
-  //         testResultDate: item.testResultDate ? formatDate(parseDate(item.testResultDate), { mode: 'wide' }) : '--',
-  //         testResult: item.testResult || '--',
-  //         testedBy: item.testedBy || '--',
-  //         resultStatus: item.resultStatus || '--',
-
-  //         reqDate: item.requestedDate,
-  //         specimenCollectedDateGC: item.specimenCollectedDate || null,
-  //         providerPhoneNo: item.providerPhoneNo || null,
-  //         specimenSentToReferralDateGC: item.specimenSentToReferralDate || null,
-  //         requestedBy: item.requestedBy || null,
-
-  //         resultDate: item.testResultDate,
-  //         reviewedBy: item.reviewedBy,
-  //         aletSentDate: item.aletSentDate,
-  //         dispatchedDate: item.dispatchedDate,
-  //         labId: item.labId,
-  //         labName: item.labName,
-  //         specimenReceivedDate: item.specimenReceivedDate,
-  //         reasonQuality: item.reason,
-  //         instrumentUsed: item.instrumentUsed,
-  //         temperatureOnArrival: item.temperatureOnArrival,
-  //         resultReachedToFacDate: item.resultReachedToFacDate,
-  //         resultReceivedByFacility: item.resultReceivedByFacility,
-  //       }))
-  //     : [];
-  // }, [vlRequestOrders]);
 
   const getDisplayOrderStatus = (orderStatus?: string, exchangeStatus?: string, resultStatus?: string) => {
     if (orderStatus === 'INCOMPLETE') {
@@ -378,9 +339,21 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
       )}
       {/* <CardHeader title={headerTitle}> */}
       <CardHeader title={headerTitle}>
-        <span className={`${styles.connectionBadge} ${isOnline ? styles.connected : styles.disconnected}`}>
-          {isOnline ? 'Connected' : 'Disconnected'}
+        <span
+          className={`${styles.connectionBadge} ${
+            isConnected === true ? styles.connected : isConnected === false ? styles.disconnected : styles.checking
+          }`}
+        >
+          {isConnected === null
+            ? 'Checking...'
+            : isConnected
+            ? 'Connected to interoperability layer'
+            : 'Please Check your internet connection'}
         </span>
+
+        {/* <span className={`${styles.connectionBadge} ${isOnline ? styles.connected : styles.disconnected}`}>
+          {isOnline ? 'Connected' : 'Disconnected'}
+        </span> */}
         {isValidating && <InlineLoading />}
         {hasFollowupRecord && !hasIncompleteResult && (
           <Button

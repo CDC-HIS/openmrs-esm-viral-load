@@ -22,17 +22,19 @@
 
 .connected {
   background-color: #d4f4dd;
+  left: 25%;
   color: #1b5e20;
 }
 
 .disconnected {
   background-color: #fde2e2;
+  left: 25%;
   color: #b71c1c;
 }
 
 .centerBadgeWrapper {
   position: absolute;
-  left: 30%;
+  left: 25%;
   transform: translateX(-50%);
 }
 
