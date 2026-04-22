@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   DataTable,
@@ -129,9 +129,15 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
+  const isCheckingRef = useRef(false);
+
   const checkStatus = useCallback(async () => {
+    if (isCheckingRef.current) return; // 🚫 prevent overlap
+
+    isCheckingRef.current = true;
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
     try {
       const response = await fetch('/openmrs/ws/rest/v1/ethiohri/status', {
@@ -148,12 +154,13 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
       setIsConnected(false);
     } finally {
       clearTimeout(timeout); // ✅ always clear
+      isCheckingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
     checkStatus();
-    const interval = setInterval(checkStatus, 30000);
+    const interval = setInterval(checkStatus, 60000);
     return () => clearInterval(interval);
   }, [checkStatus]);
 
