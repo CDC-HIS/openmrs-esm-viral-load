@@ -225,7 +225,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     }
 
     if (exchangeStatus === 'RECEIVED' && (resultStatus === 'MANUAL_FOLLOWUP' || resultStatus === 'MANUAL_ETTORS')) {
-      return { label: 'COMPLETE', type: 'warning' }; // Green
+      return { label: 'Manually Processed', type: 'warning' }; // Green
     }
 
     return { label: orderStatus || '--', color: '#525252' }; // Default gray
@@ -359,7 +359,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
             ? 'Checking...'
             : isConnected
             ? 'Connected to interoperability layer'
-            : 'Please Check your internet connection'}
+            : 'Disconnected from interoperability layer'}
         </span>
 
         {/* <span className={`${styles.connectionBadge} ${isOnline ? styles.connected : styles.disconnected}`}>
