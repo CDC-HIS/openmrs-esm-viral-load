@@ -841,6 +841,13 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                     <Controller
                       name="resultReceivedDate"
                       control={control}
+                      rules={{
+                        //required: 'Test Date is required'
+                        required:
+                          watchSpecimenQuality !== 'Unacceptable'
+                            ? 'Date result reached to Facility is required'
+                            : false,
+                      }}
                       render={({ field: { onChange, value, ref }, fieldState }) => {
                         const testDate = watch('testDate');
                         return (
@@ -852,17 +859,18 @@ const ViralLoadResult: React.FC<ViralLoadResultFormProps> = ({ patientUuid, enco
                                 <>
                                   <span className={styles.label}>
                                     {t('resultReceivedDate', 'Date result reached to Facility')}
+                                    <span className={styles.required}>*</span>
                                   </span>
                                 </>
                               }
                               value={value}
-                              minDate={testDate}
+                              minDate={testDate || specimenSentToReferralDate}
                               maxDate={today}
                               onChange={(date) => onDateChange(date, 'resultReceivedDate')}
                               ref={ref}
                               invalid={!!fieldState.error}
+                              invalidText={fieldState.error?.message}
                             />
-                            {fieldState.error && <div className={styles.errorMessage}>{fieldState.error.message}</div>}
                           </>
                         );
                       }}
