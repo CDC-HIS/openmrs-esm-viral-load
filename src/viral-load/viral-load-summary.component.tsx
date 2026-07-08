@@ -13,8 +13,8 @@ import {
 } from '@carbon/react';
 import { DataTableSkeleton, InlineLoading } from '@carbon/react';
 import { Add } from '@carbon/react/icons';
-import { formatDate, parseDate, useLayoutType } from '@openmrs/esm-framework';
-import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import { formatDate, parseDate, useLayoutType, launchWorkspace2 } from '@openmrs/esm-framework';
+import { CardHeader, EmptyState, ErrorState } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
 import { useVLRequestOrders } from './viral-load.resource';
@@ -22,7 +22,7 @@ import { VIRALLOAD_ENCOUNTER_TYPE_UUID, viralLoadFieldConcepts, ettorsWorkspace 
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { TableExpandRow, TableExpandedRow } from '@carbon/react';
-import debounce from 'lodash.debounce';
+// import debounce from 'lodash.debounce';
 import { fetchPatientData, fetchVlTestRequestResult, useLatestObs } from '../api/api';
 import { config } from 'dotenv';
 import { Tag } from '@carbon/react';
@@ -122,7 +122,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-  const launchViralLoadForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
+  const launchViralLoadForm = useCallback(() => launchWorkspace2(ettorsWorkspace), []);
 
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
   const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);
@@ -281,8 +281,8 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
         reason: item.routineVl
           ? routineMap[item.routineVl] || item.routineVl
           : item.targeted
-          ? targetedMap[item.targeted] || item.targeted
-          : null,
+            ? targetedMap[item.targeted] || item.targeted
+            : null,
 
         specimenCollectedDate: item.specimenCollectedDate
           ? formatDate(parseDate(item.specimenCollectedDate), { mode: 'wide', time: false, noToday: true })
@@ -358,8 +358,8 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
           {isConnected === null
             ? 'Checking...'
             : isConnected
-            ? 'Connected to interoperability layer'
-            : 'Disconnected from interoperability layer'}
+              ? 'Connected to interoperability layer'
+              : 'Disconnected from interoperability layer'}
         </span>
 
         {/* <span className={`${styles.connectionBadge} ${isOnline ? styles.connected : styles.disconnected}`}>
@@ -426,7 +426,7 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
                                     {cell.value.label}
                                   </span>
                                 ) : (
-                                  cell.value?.content ?? cell.value
+                                  (cell.value?.content ?? cell.value)
                                 )}
                               </TableCell>
                             ))}

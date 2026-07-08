@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Layer, OverflowMenu, OverflowMenuItem } from '@carbon/react';
-import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
-import { showModal, useLayoutType } from '@openmrs/esm-framework';
+import { showModal, useLayoutType, launchWorkspace2 } from '@openmrs/esm-framework';
 import styles from './encounter-action-menu.scss';
 import { type OpenmrsEncounter } from '../types';
 import { ettorsWorkspace, vlResultWorkspace } from '../constants';
@@ -70,7 +69,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const launchEditEncounterForm = useCallback(() => {
-    launchPatientWorkspace(ettorsWorkspace, {
+    launchWorkspace2(ettorsWorkspace, {
       workspaceTitle: t('editEncounter', 'Edit Encounter'),
       encounter,
       formContext: 'editing',
@@ -78,7 +77,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
   }, [encounter, t]);
 
   const launchAddVLResultForm = useCallback(() => {
-    launchPatientWorkspace(vlResultWorkspace, {
+    launchWorkspace2(vlResultWorkspace, {
       workspaceTitle: t('editEncounter', 'Viral Load Result'),
       encounter,
       formContext: 'editing',
@@ -122,10 +121,10 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
             encounter.exchangeStatus === 'SENT'
               ? t('viewOrder', 'View Order')
               : encounter.exchangeStatus === 'RECEIVED'
-              ? t('viewOrder', 'View Order')
-              : encounter.orderStatus === 'INCOMPLETE'
-              ? t('completeOrder', 'Complete Order')
-              : t('modifyOrder', 'Edit Order')
+                ? t('viewOrder', 'View Order')
+                : encounter.orderStatus === 'INCOMPLETE'
+                  ? t('completeOrder', 'Complete Order')
+                  : t('modifyOrder', 'Edit Order')
           }
         />
         <OverflowMenuItem
@@ -137,10 +136,10 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: EncounterActionM
             encounter.resultStatus === 'MANUAL_ETTORS'
               ? t('editResult', 'Edit Result')
               : encounter.resultStatus === '--'
-              ? t('editResult', 'Add Result')
-              : encounter.resultStatus === null
-              ? t('editResult', 'Add Result')
-              : t('view', 'View result')
+                ? t('editResult', 'Add Result')
+                : encounter.resultStatus === null
+                  ? t('editResult', 'Add Result')
+                  : t('view', 'View result')
           }
           disabled={encounter.orderStatus === 'INCOMPLETE'}
         />

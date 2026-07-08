@@ -13,8 +13,8 @@ import {
 } from '@carbon/react';
 import { DataTableSkeleton, InlineLoading } from '@carbon/react';
 import { Add } from '@carbon/react/icons';
-import { formatDate, parseDate, restBaseUrl, useLayoutType } from '@openmrs/esm-framework';
-import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import { formatDate, parseDate, restBaseUrl, useLayoutType, launchWorkspace2 } from '@openmrs/esm-framework';
+import { CardHeader, EmptyState, ErrorState } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
 import { useVLRequestOrders } from './viral-load.resource';
@@ -60,7 +60,7 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
     getPatientData();
   }, [patientUuid]);
 
-  const launchTransferOutForm = useCallback(() => launchPatientWorkspace(ettorsWorkspace), []);
+  const launchTransferOutForm = useCallback(() => launchWorkspace2(ettorsWorkspace), []);
 
   // const tableHeaders = [
   //   { key: 'regimen', header: 'Regimen' },
@@ -106,27 +106,27 @@ const ViralLoadCurrent: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
 
   const tableRows = patientData
     ? patientData.map((patient, index) => ({
-      id: patient.patientUUID || index,
-      regimen: patient.regimen || null,
-      currentRegimenInitiatedDate: patient.currentRegimenInitiatedDate
-        ? formatDate(parseDate(patient.currentRegimenInitiatedDate), { mode: 'wide' })
-        : null,
-      followUpStatus: patient.followUpStatus,
-      pregnant: patient.pregnancyStatus !== null ? patient.pregnancyStatus : null,
-      breastFeeding: patient.breastFeeding !== null ? patient.breastFeeding : null,
-      cd4:
-        patient.cd4AboveFiveAgeCount != null
-          ? patient.cd4AboveFiveAgeCount
-          : patient.cd4ForChild != null
-            ? patient.cd4ForChild
-            : null,
-      // reasonForVlTest:
-      //   patient.routingVlTest != null
-      //     ? patient.routingVlTest
-      //     : patient.targetedVlTest != null
-      //     ? patient.targetedVlTest
-      //     : null,
-    }))
+        id: patient.patientUUID || index,
+        regimen: patient.regimen || null,
+        currentRegimenInitiatedDate: patient.currentRegimenInitiatedDate
+          ? formatDate(parseDate(patient.currentRegimenInitiatedDate), { mode: 'wide' })
+          : null,
+        followUpStatus: patient.followUpStatus,
+        pregnant: patient.pregnancyStatus !== null ? patient.pregnancyStatus : null,
+        breastFeeding: patient.breastFeeding !== null ? patient.breastFeeding : null,
+        cd4:
+          patient.cd4AboveFiveAgeCount != null
+            ? patient.cd4AboveFiveAgeCount
+            : patient.cd4ForChild != null
+              ? patient.cd4ForChild
+              : null,
+        // reasonForVlTest:
+        //   patient.routingVlTest != null
+        //     ? patient.routingVlTest
+        //     : patient.targetedVlTest != null
+        //     ? patient.targetedVlTest
+        //     : null,
+      }))
     : [];
 
   // patientData?.length ? patientData.map((data, index) => ({
