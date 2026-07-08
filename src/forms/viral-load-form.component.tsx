@@ -26,7 +26,7 @@ import { Dropdown } from '@carbon/react';
 import { InlineLoading } from '@carbon/react';
 import { Accordion } from '@carbon/react';
 import { AccordionItem } from '@carbon/react';
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 
 interface RequiredFieldLabelProps {
   label: string;
