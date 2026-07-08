@@ -424,7 +424,6 @@ const ViralLoadForm: React.FC<Workspace2DefinitionProps<ViralLoadFormProps>> = (
       ...vlResultPayload,
       patientUUID: vlResultPayload.patientUuid, // Map patientUUID to patientUuid
     };
-    console.log('vlResultPayload', vlResultPayload);
     delete apiPayload.patientUuid;
 
     try {
