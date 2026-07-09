@@ -45,7 +45,7 @@
     {
       "name": "ettors-summary-dashboard",
       "component": "ettorsDashboardLink",
-      "slot": "patient-chart-dashboard-slot",
+      "slot": "vl-etorrs-slot",
       "online": true,
       "offline": true,
       "order": 6,

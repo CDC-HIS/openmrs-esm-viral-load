@@ -4,6 +4,6 @@ export const dashboardMeta: DashboardLinkConfig & { slot: string; hideDashboardT
   slot: 'ettors-dashboard-slot',
   path: 'etorrs',
   title: 'VL-ETORRS',
-  icon: 'omrs-icon-lab-order',
+  //icon: 'omrs-icon-lab-order',
   hideDashboardTitle: true,
 };
