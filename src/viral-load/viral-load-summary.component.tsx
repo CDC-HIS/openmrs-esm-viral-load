@@ -122,7 +122,12 @@ const ViralLoadSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) =
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-  const launchViralLoadForm = useCallback(() => launchWorkspace2(ettorsWorkspace), []);
+  //const launchViralLoadForm = useCallback(() => launchWorkspace2(ettorsWorkspace), []);
+  const launchViralLoadForm = useCallback(() => {
+    launchWorkspace2(ettorsWorkspace, {
+      patientUuid,
+    });
+  }, [patientUuid]);
 
   const [vlTestRequestData, setVlTestRequestData] = useState(null);
   const [isLoadingTestData, setIsLoadingTestData] = useState<boolean>(true);

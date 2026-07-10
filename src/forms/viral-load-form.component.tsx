@@ -58,6 +58,8 @@ type RoutineTestOption = {
 };
 
 type EncounterType = {
+  patientId?: number;
+  patientUUID?: string;
   specimenType?: string;
   orderStatus?: string;
   exchangeStatus?: string;
@@ -83,7 +85,8 @@ interface ViralLoadFormProps {
 
 const ViralLoadForm: React.FC<Workspace2DefinitionProps<ViralLoadFormProps>> = ({ workspaceProps, closeWorkspace }) => {
   //= ({ patientUuid, encounter }) => {
-  const { encounter, patientUuid } = workspaceProps;
+  const { encounter } = workspaceProps;
+  const patientUuid = encounter?.patientUUID ?? workspaceProps?.patientUuid;
   const { t } = useTranslation();
   const [reqDate, setrequestedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
